@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Reddit+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* Base styles (subset from Sidebar.html for dialog self-containment) */
+    body { padding: 15px; font-family: 'Reddit Sans Condensed', sans-serif; font-size: 14px; margin:0; background-color: white; }
+    body, p, span, a, button, h3, div, label, input, select { font-family: 'Reddit Sans Condensed', sans-serif; box-sizing: border-box; }
+    h3 { font-size: 16px; font-weight: bold; margin-top: 0; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 6px; }
+    h4 { font-size: 14px; margin-top:0; margin-bottom: 8px; font-weight:bold; }
+
+    /* Column Chooser Dialog Specific Styling (copied from Sidebar.html) */
+    /* Note: Overlay is usually handled by showModalDialog, so #column-chooser-dialog-overlay might not be needed or can be hidden */
+    #column-chooser-dialog-overlay { display: none; } /* Hide if modal provides its own */
+
+    #column-chooser-list {
+      max-height: 180px; /* Adjusted for potentially smaller dialog height */
+      overflow-y: auto;
+      margin-bottom: 15px; border: 1px solid #eee; padding: 8px;
+      background-color: #fdfdfd;
+    }
+    #column-chooser-list div { display: flex; align-items: center; margin-bottom: 6px; }
+    #column-chooser-list input[type="checkbox"] { margin-right: 8px; }
+    #column-chooser-list label { font-size: 14px; flex-grow: 1; user-select: none; }
+
+    #column-chooser-filters { margin-top: 10px; margin-bottom: 15px; padding-top:10px; border-top: 1px solid #eee;}
+    #column-chooser-filters > div { margin-bottom: 8px; }
+    #column-chooser-filters label { display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold; }
+    #column-chooser-filters select {
+      width: 100%;
+      padding: 7px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 13px;
+      background-color: #fff;
+    }
+
+    /* Custom View States Section Styling (copied from Sidebar.html) */
+    #custom-view-states-section {
+      margin-top: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+    #saved-states-list {
+      max-height: 90px; /* Adjusted */
+      overflow-y: auto;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    #saved-states-list .saved-state-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 2px; /* Slightly adjusted padding */
+      border-bottom: 1px dashed #f0f0f0;
+    }
+    #saved-states-list .saved-state-item:last-child { border-bottom: none; }
+    #saved-states-list .saved-state-name { flex-grow: 1; }
+    #saved-states-list .saved-state-actions button {
+      margin-left: 5px;
+      padding: 4px 7px; 
+      font-size: 11px; 
+      text-transform: none; 
+      min-width: auto; 
+      border: 1px solid #ccc; /* Added border for definition */
+      background-color: #f8f9fa;
+    }
+     #saved-states-list .saved-state-actions button:hover { background-color: #e9ecef;}
+
+    #save-state-name {
+      width: 100%; 
+      padding: 7px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    #save-current-state-button { /* Matches .blue from add-ons.css more or less */
+      width: 100%;
+      padding: 8px 12px;
+      text-transform: uppercase;
+      font-size: 13px;
+      background-color: #4d90fe; 
+      color: white;
+      border: 1px solid #3079ed;
+      border-radius: 2px;
+    }
+    #save-current-state-button:hover { background-color: #357ae8; }
+
+    #custom-view-state-status, #column-chooser-error, #column-chooser-status {
+      font-size: 12px;
+      min-height: 1.5em; /* Ensure space even if empty */
+      margin-top: 6px;
+      padding: 2px;
+    }
+    #custom-view-state-status .success, #column-chooser-status .success-message { color: #188038; font-weight:bold; }
+    #custom-view-state-status .error, #column-chooser-error.error-message { color: red; font-weight:bold; }
+    .error-message { display:none; } /* Hide error message div by default */
+    .status-message {display:none;} /* Hide status message div by default */
+
+
+    .dialog-footer { text-align: right; margin-top: 20px; padding-top:10px; border-top: 1px solid #ccc;}
+    .dialog-footer button {
+      margin-left: 8px; padding: 8px 12px; text-transform: uppercase;
+    }
+    /* Standard add-on button styling */
+    button#column-chooser-apply { /* Class 'action' often used in add-ons */
+        background-color: #4d90fe; color: white; border: 1px solid #3079ed; border-radius:2px;
+    }
+    button#column-chooser-apply:hover { background-color: #357ae8; }
+    button#column-chooser-cancel {
+       background-color: #f8f9fa; color: #3c4043; border: 1px solid #ccc; border-radius:2px;
+    }
+    button#column-chooser-cancel:hover { background-color: #e9ecef; }
+    
+    .loader-local { /* For local loaders within the dialog */
+        font-style: italic; color: #888; display: none; padding: 5px 0; font-size: 12px;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- The overlay div might not be necessary when using showModalDialog -->
+  <!-- <div id="column-chooser-dialog-overlay"></div> -->
+
+  <!-- Main Dialog Structure -->
+  <h3 id="column-chooser-title">Personalizar Vista</h3>
+  
+  <div id="column-chooser-list-container">
+    <label style="font-weight:bold; font-size:13px; display:block; margin-bottom:4px;">Colunas Visíveis:</label>
+    <div id="column-chooser-list">
+      <!-- Checkboxes will be populated here -->
+      <div class="loader-local" id="column-list-loader" style="display:block;">A carregar colunas...</div>
+    </div>
+  </div>
+
+  <div id="column-chooser-filters">
+    <h4>Filtros Rápidos</h4>
+    <div>
+      <label for="filter-status">Status:</label>
+      <select id="filter-status" data-filter-header="Status">
+        <option value="">-- Todos --</option>
+        <!-- Options will be populated dynamically -->
+      </select>
+      <div class="loader-local" id="filter-status-loader" style="display:none;">A carregar valores...</div>
+    </div>
+    <div>
+      <label for="filter-responsavel">Responsável:</label>
+      <select id="filter-responsavel" data-filter-header="Responsável">
+        <option value="">-- Todos --</option>
+        <!-- Options will be populated dynamically -->
+      </select>
+      <div class="loader-local" id="filter-responsavel-loader" style="display:none;">A carregar valores...</div>
+    </div>
+  </div>
+
+  <div id="custom-view-states-section">
+      <h4>Configurações Guardadas</h4>
+      <div id="saved-states-list">
+          <p>A carregar...</p> <!-- Default message -->
+      </div>
+      <div>
+          <input type="text" id="save-state-name" placeholder="Nome da nova configuração" />
+          <button id="save-current-state-button">Guardar Configuração Atual</button>
+      </div>
+      <div id="custom-view-state-status"></div>
+  </div>
+  
+  <div id="column-chooser-error" class="error-message"></div>
+  <div id="column-chooser-status" class="status-message"></div>
+
+  <div class="dialog-footer">
+    <button id="column-chooser-cancel">Cancelar</button>
+    <button id="column-chooser-apply">Aplicar</button>
+  </div>
+
+  <script>
+    // --- Global variables within this dialog's scope ---
+    const DEBUG_MODE = false; // Set to true for verbose logging in this dialog
+    // viewName is injected by Code.gs using HtmlTemplate
+    // Example: var template = HtmlService.createTemplateFromFile("ColumnChooserDialog"); template.viewName = "MyView";
+    var currentColumnChooserViewName = "<?!= viewName ?>"; 
+
+    const columnChooserList = document.getElementById('column-chooser-list');
+    const columnChooserTitle = document.getElementById('column-chooser-title');
+    const columnChooserError = document.getElementById('column-chooser-error');
+    const columnChooserStatus = document.getElementById('column-chooser-status');
+    const cancelColumnChooserButton = document.getElementById('column-chooser-cancel');
+    const applyColumnChooserButton = document.getElementById('column-chooser-apply');
+    
+    const savedStatesList = document.getElementById('saved-states-list');
+    const saveStateNameInput = document.getElementById('save-state-name');
+    const saveCurrentStateButton = document.getElementById('save-current-state-button');
+    const customViewStateStatus = document.getElementById('custom-view-state-status');
+
+    const columnListLoader = document.getElementById('column-list-loader');
+    // Add other loader references if needed, e.g., for filter dropdowns, or handle them more generically
+
+    const PREDEFINED_FILTER_COLUMNS = ["Status", "Responsável"];
+
+    // --- Initialization ---
+    // The main logic will run once currentColumnChooserViewName is confirmed.
+    // Using window.onload to ensure the whole DOM is ready, though with script at end of body, it's mostly true.
+    window.addEventListener('load', function() {
+      if (DEBUG_MODE) console.log("[DIALOG] Window loaded. View name from template: ", currentColumnChooserViewName);
+      if (!currentColumnChooserViewName || currentColumnChooserViewName === "<?!= viewName ?>") {
+         // This check is in case the templating failed or was not replaced.
+         currentColumnChooserViewName = "ErrorNoViewName"; // Fallback or error state
+         if (DEBUG_MODE) console.error("[DIALOG] viewName was not properly injected by template. Using fallback:", currentColumnChooserViewName);
+      }
+      initializeDialog(); // Changed from openColumnChooserLogic to initializeDialog
+    });
+
+    function showDialogLoader(loaderId, show = true) {
+        const loader = document.getElementById(loaderId);
+        if (loader) loader.style.display = show ? 'block' : 'none';
+    }
+    
+    function hideAllDialogLoaders() {
+        showDialogLoader('column-list-loader', false);
+        PREDEFINED_FILTER_COLUMNS.forEach(headerName => {
+            const safeHeaderName = headerName.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+            showDialogLoader(`filter-${safeHeaderName}-loader`, false);
+        });
+    }
+
+    function initializeDialog() { // Renamed from openColumnChooserLogic
+      if (!currentColumnChooserViewName || currentColumnChooserViewName === "ErrorNoViewName") {
+        onColumnChooserFailure({message: "Nome da vista não configurado para o diálogo."}, "Erro Crítico de Configuração");
+        // Disable all interactive elements as the dialog is not properly configured
+        applyColumnChooserButton.disabled = true;
+        saveCurrentStateButton.disabled = true;
+        // Consider hiding lists or showing a more prominent error message in the main body
+        columnChooserList.innerHTML = '<p style="color:red; font-weight:bold;">Erro: Diálogo não inicializado corretamente. Nome da vista em falta.</p>';
+        return;
+      }
+      if (DEBUG_MODE) console.log("[DIALOG] Initializing for view:", currentColumnChooserViewName);
+
+      resetColumnChooserDialog(); 
+      columnChooserTitle.innerText = "Personalizar Vista: " + currentColumnChooserViewName;
+      showDialogLoader('column-list-loader', true);
+
+      google.script.run
+        .withSuccessHandler(function(headers) {
+          if (DEBUG_MODE) console.log("[DIALOG] getViewHeaders success for " + currentColumnChooserViewName + ":", headers);
+          google.script.run
+            .withSuccessHandler(function(visibilityStates) {
+              if (DEBUG_MODE) console.log("[DIALOG] getCurrentColumnVisibility success for " + currentColumnChooserViewName + ":", visibilityStates);
+              populateColumnChooserList(headers, visibilityStates);
+              populateFilterDropdowns(currentColumnChooserViewName); 
+              loadAndDisplaySavedStates(currentColumnChooserViewName); 
+              hideAllDialogLoaders();
+            })
+            .withFailureHandler(function(error) {
+              onColumnChooserFailure(error, "Erro ao obter o estado de visibilidade das colunas.");
+              hideAllDialogLoaders();
+            })
+            .getCurrentColumnVisibility(currentColumnChooserViewName);
+        })
+        .withFailureHandler(function(error) {
+           onColumnChooserFailure(error, "Erro ao obter os cabeçalhos da vista.");
+           hideAllDialogLoaders();
+        })
+        .getViewHeaders(currentColumnChooserViewName);
+    }
+    
+    function populateFilterDropdowns(viewName) {
+      PREDEFINED_FILTER_COLUMNS.forEach(function(headerName) {
+        const safeHeaderName = headerName.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
+        const selectElement = document.querySelector(`#column-chooser-filters select[data-filter-header="${headerName}"]`);
+        
+        if (!selectElement) {
+          if (DEBUG_MODE) console.warn(`[DIALOG] Filter select element for "${headerName}" not found.`);
+          return;
+        }
+        showDialogLoader(`filter-${safeHeaderName}-loader`, true);
+        while (selectElement.options.length > 1) { selectElement.remove(1); }
+
+        google.script.run
+          .withSuccessHandler(function(uniqueValues) {
+            if (DEBUG_MODE) console.log(`[DIALOG] Got unique values for ${headerName}:`, uniqueValues);
+            if (uniqueValues && uniqueValues.length > 0) {
+              uniqueValues.forEach(function(value) {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                selectElement.appendChild(option);
+              });
+            }
+            showDialogLoader(`filter-${safeHeaderName}-loader`, false);
+          })
+          .withFailureHandler(function(error) {
+            if (DEBUG_MODE) console.error(`[DIALOG] Error getting unique values for ${headerName}:`, error);
+            selectElement.disabled = true;
+            const errorSpan = document.createElement('span');
+            errorSpan.textContent = 'Erro.'; errorSpan.style.color = 'red'; errorSpan.style.fontSize = '11px';
+            if(selectElement.parentNode) selectElement.parentNode.appendChild(errorSpan);
+            showDialogLoader(`filter-${safeHeaderName}-loader`, false);
+          })
+          .getColumnUniqueValues(headerName, viewName);
+      });
+    }
+
+    function populateColumnChooserList(headers, visibilityStates) {
+      columnChooserList.innerHTML = ''; 
+      if (!headers || headers.length === 0) {
+        columnChooserList.innerHTML = '<span>Nenhum cabeçalho encontrado.</span>';
+        return;
+      }
+      headers.forEach(function(headerText) {
+        const itemDiv = document.createElement('div');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        const safeIdText = headerText.replace(/[^a-zA-Z0-9-_]/g, '').replace(/\s+/g, '-');
+        checkbox.id = 'chk-header-' + safeIdText;
+        checkbox.name = headerText; 
+        checkbox.checked = visibilityStates[headerText] === true;
+
+        const label = document.createElement('label');
+        label.htmlFor = checkbox.id;
+        label.textContent = headerText;
+
+        itemDiv.appendChild(checkbox);
+        itemDiv.appendChild(label);
+        columnChooserList.appendChild(itemDiv);
+      });
+    }
+    
+    function resetColumnChooserDialog() {
+        columnChooserList.innerHTML = '';
+        columnChooserError.innerText = ''; columnChooserError.style.display = 'none';
+        columnChooserStatus.innerText = ''; columnChooserStatus.style.display = 'none';
+        customViewStateStatus.innerText = ''; customViewStateStatus.className = ''; customViewStateStatus.style.display = 'none';
+        saveStateNameInput.value = ''; 
+
+        PREDEFINED_FILTER_COLUMNS.forEach(function(headerName) {
+            const selectElement = document.querySelector(`#column-chooser-filters select[data-filter-header="${headerName}"]`);
+            if (selectElement) {
+                selectElement.value = ""; 
+                selectElement.disabled = false; 
+                let nextSibling = selectElement.nextElementSibling;
+                if (nextSibling && nextSibling.tagName === 'SPAN' && nextSibling.style.color === 'red') {
+                    nextSibling.remove();
+                }
+                 while (selectElement.options.length > 1) { selectElement.remove(1); }
+            }
+        });
+        savedStatesList.innerHTML = '<p>A carregar...</p>'; 
+        if (DEBUG_MODE) console.log("[DIALOG] Column Chooser dialog reset.");
+    }
+
+    function closeDialog() { // Renamed from closeColumnChooser
+      google.script.host.close();
+    }
+    
+    function showStatusMessageInDialog(message, isError = false) {
+        columnChooserStatus.innerText = message;
+        columnChooserStatus.className = isError ? 'error-message' : 'success-message';
+        columnChooserStatus.style.color = isError ? 'red' : '#188038';
+        columnChooserStatus.style.display = 'block';
+        columnChooserError.style.display = 'none'; 
+    }
+    
+    function showStatusMessageInCustomStateSection(message, isSuccess) {
+      customViewStateStatus.textContent = message;
+      customViewStateStatus.className = isSuccess ? 'success' : 'error';
+      customViewStateStatus.style.display = 'block';
+      setTimeout(function() { 
+          customViewStateStatus.textContent = '';
+          customViewStateStatus.style.display = 'none';
+          customViewStateStatus.className = '';
+      }, 4000);
+    }
+
+    function onColumnChooserFailure(error, defaultMessage) {
+        if (DEBUG_MODE) console.error("[DIALOG] Backend call failed:", error);
+        // hideAllDialogLoaders(); // Ensure all specific loaders are hidden
+        columnChooserError.innerText = (error && error.message) ? error.message : defaultMessage;
+        columnChooserError.style.display = 'block';
+        columnChooserStatus.style.display = 'none'; 
+    }
+    
+    function loadAndDisplaySavedStates(viewName) {
+      if (!viewName) return;
+      savedStatesList.innerHTML = '<div class="loader-local" style="display:block;">A carregar...</div>';
+      customViewStateStatus.innerText = ''; customViewStateStatus.style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(states) {
+          if (DEBUG_MODE) console.log("[DIALOG] getCustomViewStates success for " + viewName + ":", states);
+          savedStatesList.innerHTML = ''; 
+          if (states && states.length > 0) {
+            states.forEach(function(state) {
+              const item = document.createElement('div'); item.className = 'saved-state-item';
+              const nameSpan = document.createElement('span'); nameSpan.className = 'saved-state-name'; nameSpan.textContent = state.name;
+              item.appendChild(nameSpan);
+              const actionsDiv = document.createElement('div'); actionsDiv.className = 'saved-state-actions';
+              const loadButton = document.createElement('button'); loadButton.className = 'load-state-button'; loadButton.textContent = 'Carregar'; loadButton.dataset.stateName = state.name;
+              actionsDiv.appendChild(loadButton);
+              const deleteButton = document.createElement('button'); deleteButton.className = 'delete-state-button'; deleteButton.textContent = 'Eliminar'; deleteButton.dataset.stateName = state.name;
+              actionsDiv.appendChild(deleteButton);
+              item.appendChild(actionsDiv);
+              savedStatesList.appendChild(item);
+            });
+          } else {
+            savedStatesList.innerHTML = '<p>Nenhuma configuração guardada.</p>';
+          }
+        })
+        .withFailureHandler(function(error) {
+          if (DEBUG_MODE) console.error("[DIALOG] Error in getCustomViewStates:", error);
+          savedStatesList.innerHTML = '<p style="color:red;">Erro ao carregar configurações.</p>';
+        })
+        .getCustomViewStates(viewName);
+    }
+
+    saveCurrentStateButton.addEventListener('click', function() {
+      const stateName = saveStateNameInput.value.trim();
+      if (!stateName) {
+        showStatusMessageInCustomStateSection("Por favor, insira um nome para a configuração.", false);
+        return;
+      }
+      if (!currentColumnChooserViewName) {
+         showStatusMessageInCustomStateSection("Erro: Nome da vista base não definido.", false);
+         return;
+      }
+      let columnVisibility = {};
+      document.querySelectorAll('#column-chooser-list input[type="checkbox"]').forEach(function(checkbox) {
+          columnVisibility[checkbox.name] = checkbox.checked;
+      });
+      let filterSettings = {};
+      PREDEFINED_FILTER_COLUMNS.forEach(function(headerName) {
+          const selectElement = document.querySelector(`#column-chooser-filters select[data-filter-header="${headerName}"]`);
+          if (selectElement && selectElement.value !== "") { filterSettings[headerName] = selectElement.value; }
+      });
+      const settings = { columnVisibility: columnVisibility, filterSettings: filterSettings };
+      if (DEBUG_MODE) console.log("[DIALOG] Saving state:", currentColumnChooserViewName, stateName, settings);
+      // No global loader needed here, using local status message
+      customViewStateStatus.textContent = "A guardar..."; customViewStateStatus.className="info"; customViewStateStatus.style.display='block';
+
+      google.script.run
+        .withSuccessHandler(function(message) {
+            showStatusMessageInCustomStateSection(message, true);
+            loadAndDisplaySavedStates(currentColumnChooserViewName); 
+            saveStateNameInput.value = ''; 
+        })
+        .withFailureHandler(function(error) {
+            showStatusMessageInCustomStateSection(error.message || 'Erro desconhecido ao guardar.', false);
+        })
+        .saveCustomViewState(currentColumnChooserViewName, stateName, settings);
+    });
+
+    savedStatesList.addEventListener('click', function(event) {
+      const target = event.target;
+      const stateName = target.dataset.stateName;
+      if (!currentColumnChooserViewName || !stateName) return;
+
+      if (target.classList.contains('load-state-button')) {
+        if (DEBUG_MODE) console.log("[DIALOG] Load state clicked:", currentColumnChooserViewName, stateName);
+        customViewStateStatus.textContent = "A carregar '" + stateName + "'..."; customViewStateStatus.className="info"; customViewStateStatus.style.display='block';
+        google.script.run
+            .withSuccessHandler(function(message) {
+                showStatusMessageInDialog(message); 
+                setTimeout(closeDialog, 1500); 
+            })
+            .withFailureHandler(function(error) {
+                onColumnChooserFailure(error, "Erro ao carregar configuração."); 
+            })
+            .applyCustomViewState(currentColumnChooserViewName, stateName);
+      } else if (target.classList.contains('delete-state-button')) {
+        if (confirm("Tem a certeza que deseja eliminar a configuração '" + stateName + "'?")) {
+          if (DEBUG_MODE) console.log("[DIALOG] Delete state clicked:", currentColumnChooserViewName, stateName);
+          customViewStateStatus.textContent = "A eliminar '" + stateName + "'..."; customViewStateStatus.className="info"; customViewStateStatus.style.display='block';
+          google.script.run
+            .withSuccessHandler(function(message) {
+                showStatusMessageInCustomStateSection(message, true);
+                loadAndDisplaySavedStates(currentColumnChooserViewName); 
+            })
+            .withFailureHandler(function(error) {
+                showStatusMessageInCustomStateSection(error.message || 'Erro desconhecido ao eliminar.', false);
+            })
+            .deleteCustomViewState(currentColumnChooserViewName, stateName);
+        }
+      }
+    });
+    
+    applyColumnChooserButton.addEventListener('click', function() {
+        if (!currentColumnChooserViewName) {
+            onColumnChooserFailure({ message: "Nome da vista não definido." }, "Erro interno.");
+            return;
+        }
+        columnChooserError.innerText = ''; columnChooserError.style.display = 'none';
+        columnChooserStatus.innerText = 'A aplicar...'; columnChooserStatus.className='info'; columnChooserStatus.style.display = 'block';
+
+        let visibilitySettings = {};
+        document.querySelectorAll('#column-chooser-list input[type="checkbox"]').forEach(function(checkbox) {
+            visibilitySettings[checkbox.name] = checkbox.checked;
+        });
+        let filterSettings = {};
+        PREDEFINED_FILTER_COLUMNS.forEach(function(headerName) {
+            const selectElement = document.querySelector(`#column-chooser-filters select[data-filter-header="${headerName}"]`);
+            if (selectElement && selectElement.value !== "") { filterSettings[headerName] = selectElement.value; }
+        });
+        if (DEBUG_MODE) console.log("[DIALOG] Applying settings for view:", currentColumnChooserViewName, "Visibility:", visibilitySettings, "Filters:", filterSettings);
+
+        google.script.run
+            .withSuccessHandler(function(visibilityMsg) {
+                if (DEBUG_MODE) console.log("[DIALOG] applyColumnVisibility success:", visibilityMsg);
+                google.script.run
+                    .withSuccessHandler(function(filterMsg) {
+                        if (DEBUG_MODE) console.log("[DIALOG] applyViewFilters success:", filterMsg);
+                        showStatusMessageInDialog("Configurações aplicadas com sucesso!");
+                        setTimeout(closeDialog, 1500); 
+                    })
+                    .withFailureHandler(function(err) { onColumnChooserFailure(err, "Erro ao aplicar filtros."); })
+                    .applyViewFilters(currentColumnChooserViewName, filterSettings);
+            })
+            .withFailureHandler(function(err) { onColumnChooserFailure(err, "Erro ao aplicar visibilidade."); })
+            .applyColumnVisibility(currentColumnChooserViewName, visibilitySettings);
+    });
+
+    cancelColumnChooserButton.addEventListener('click', closeDialog);
+
+    window.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') { // No need to check display style, host takes care of it
+        closeDialog();
+      }
+    });
+  </script>
+</body>
+</html>
