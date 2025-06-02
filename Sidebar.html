@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Reddit+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+     /* Base styles */
+     body { padding: 10px; font-family: 'Reddit Sans Condensed', sans-serif; font-size: 14px; }
+     body, p, span, a, button, h3, div, table, td { font-family: 'Reddit Sans Condensed', sans-serif; }
+     h3 { font-size: 15px; font-weight: bold; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+
+     /* --- Button Layout & Styling --- */
+     .view-buttons, .report-buttons, .format-buttons, .quote-buttons { padding: 0 2px; } /* Apply padding */
+
+     /* Base styles for ALL section buttons */
+     .view-buttons button, .report-buttons button, .format-buttons button, .quote-buttons button {
+       display: flex; align-items: center; justify-content: center;
+       text-transform: uppercase;
+       border: 1px solid transparent;
+       box-sizing: border-box;
+       padding: 7px 5px;
+       width: 95%;
+       margin: 8px auto;
+     }
+     /* Specific layout class for the summary button */
+     .summary-button-layout {
+       margin-bottom: 12px;
+       font-size: 16px; /* Sumario button slightly larger font */
+       font-weight: bold;
+     }
+     /* Container for button pairs */
+     .button-pair {
+       display: flex; justify-content: space-between;
+       margin: 8px auto;
+       width: 95%;
+     }
+     /* Styling for buttons within pairs */
+     .button-pair button {
+       width: 48%; margin: 0; font-size: 13px; padding: 7px 5px;
+     }
+     /* Ensure .blue styles apply correctly */
+     button.blue { /* Inherits from add-ons.css */ }
+     button.blue:hover { /* Inherits hover */ }
+
+     /* Info section styling */
+     .info-section { margin-top: 15px; }
+     .info-section p.planta-line { margin: 5px 0 10px 0; font-size: 13px; line-height: 1.5; word-wrap: break-word; }
+     .info-section p.planta-line .label { font-weight: bold; }
+     .info-section p.planta-line a { text-decoration: none; color: #4285f4; }
+     .info-section p.planta-line a:hover { text-decoration: underline; }
+     .info-section table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+     .info-section td { padding: 4px 0; vertical-align: top; font-size: 13px; line-height: 1.4; }
+     .info-section .label-cell { font-weight: bold; width: 65px; padding-right: 8px; white-space: nowrap; }
+     .info-section .data-cell { word-wrap: break-word; }
+
+     /* Loader and status/error styling */
+     .loader, .error-message, #pdf-status, #format-status, #quote-status {
+         font-size: 12px;
+         margin-top: 5px;
+         padding-left: 5px;
+         min-height: 1em; /* Reserve space for status messages */
+     }
+     .loader { font-style: italic; color: #888; display: none; }
+     .error-message { color: red; font-weight: bold; display: none; }
+     #pdf-status a, #quote-status a { color: #188038; font-weight: bold; } /* Green link */
+     #pdf-status span, #format-status span, #quote-status span { /* Style for status/error text */
+         display: block; margin-top: 3px;
+     }
+     #format-status .success, #quote-status .success { color: #188038; } /* Green */
+     #format-status .warning, #quote-status .warning { color: #dd8300; } /* Orange */
+     #format-status .error, #quote-status .error { color: red; } /* Red */
+
+  </style>
+</head>
+<body>
+  <h3>VISUALIZAÇÕES</h3>
+  <div class="view-buttons">
+    <button class="blue summary-button-layout" onclick="callAppsScript('SetViewMario')">Sumário</button>
+    <div class="button-pair">
+      <button class="blue" onclick="callAppsScript('SetViewDefault')">Normal</button>
+      <button class="blue" onclick="callAppsScript('SetViewBudget')">Orçamento</button>
+    </div>
+    <div class="button-pair">
+      <button class="blue" onclick="callAppsScript('SetViewClient')">Cliente</button>
+      <button class="blue" onclick="callAppsScript('setViewLayout')">Layout</button>
+    </div>
+  </div>
+
+  <h3>ORÇAMENTO</h3>
+  <div class="quote-buttons">
+      <button onclick="prepareQuote()">Preparar Orçamento</button>
+      <button onclick="generateQuotePdfAction()">Gerar PDF Orçamento</button>
+      <div id="quote-status"></div>
+  </div>
+  <h3>RELATÓRIOS</h3>
+  <div class="report-buttons">
+      <button onclick="generateSummaryPdfAction()">Gerar PDF Sumário</button>
+      <div id="pdf-status"></div>
+  </div>
+
+  <h3>FORMATAÇÃO</h3>
+  <div class="format-buttons">
+      <button onclick="uppercaseSheet()">Texto Maiúsculas (Folha Atual)</button>
+      <div id="format-status"></div>
+  </div>
+
+  <h3>INFORMAÇÃO</h3>
+  <div class="info-section">
+     <p class="planta-line"><span class="label">Planta Geral:</span> <a id="floorplan-link" href="#" target="_blank">A carregar link...</a></p>
+     <table>
+       <tbody>
+         <tr><td class="label-cell">Cliente:</td><td class="data-cell"><span id="client-name">A carregar...</span></td></tr>
+         <tr><td class="label-cell">Morada:</td><td class="data-cell"><span id="client-address">A carregar...</span></td></tr>
+         <tr><td class="label-cell">NIF:</td><td class="data-cell"><span id="client-nif">A carregar...</span></td></tr>
+         <tr><td class="label-cell">Email:</td><td class="data-cell"><span id="client-email">A carregar...</span></td></tr>
+       </tbody>
+     </table>
+     <div id="info-loader" class="loader">A carregar informação...</div>
+     <div id="info-error" class="error-message"></div>
+  </div>
+
+  <div id="action-loader" class="loader" style="margin-top: 10px;">A processar...</div>
+
+  <script>
+    console.log("[SIDEBAR] Script block loaded.");
+
+    // --- Generic Function Callers ---
+    function callAppsScript(functionName) {
+      console.log("[SIDEBAR] Calling Apps Script function:", functionName);
+      showLoader('action-loader');
+      clearAllStatusMessages();
+      google.script.run
+        .withSuccessHandler(hideLoaders)
+        .withFailureHandler(onFailure)
+        [functionName]();
+    }
+
+    function callWithStatusUpdate(functionName, statusElementId, statusVerb) {
+        console.log("[SIDEBAR] Calling Apps Script function with status:", functionName);
+        showLoader('action-loader');
+        clearAllStatusMessages();
+        var statusArea = document.getElementById(statusElementId);
+        if (statusArea) statusArea.innerHTML = '<span class="loader">' + statusVerb + '...</span>'; // Show status verb as loader text
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+              hideLoaders();
+              showStatusMessage(statusElementId, result);
+          })
+          .withFailureHandler(function(error) {
+               onFailure(error, statusElementId);
+          })
+          [functionName]();
+    }
+
+    // --- Specific Action Triggers ---
+    function generateSummaryPdfAction() { // Renamed to avoid conflict
+        callWithStatusUpdate('generateSummaryPdf', 'pdf-status', 'A gerar PDF Sumário');
+    }
+    function generateQuotePdfAction() { // Renamed to avoid conflict
+        callWithStatusUpdate('generateQuotePdf', 'quote-status', 'A gerar PDF Orçamento');
+    }
+    function uppercaseSheet() {
+        callWithStatusUpdate('convertSheetToUppercase', 'format-status', 'A converter texto');
+    }
+    function prepareQuote() {
+        callWithStatusUpdate('prepareQuoteSheet', 'quote-status', 'A preparar orçamento');
+    }
+
+
+    // --- Initial Data Loading ---
+    function loadInitialData() {
+      console.log("[SIDEBAR] loadInitialData: Iniciando...");
+      showLoader('info-loader');
+      clearAllStatusMessages();
+      clearInfoPlaceholders();
+      try {
+        google.script.run
+          .withSuccessHandler(updateInfoSection)
+          .withFailureHandler(onInfoFailure)
+          .getProjectInfo();
+         console.log("[SIDEBAR] loadInitialData: Chamada para getProjectInfo enviada.");
+      } catch (e) {
+          console.error("[SIDEBAR] loadInitialData: Erro ao chamar google.script.run:", e);
+          onInfoFailure({ message: "Erro no lado do cliente ao chamar script." });
+      }
+    }
+
+    // --- Callback Handlers ---
+    function updateInfoSection(projectInfo) {
+      console.log("[SIDEBAR] updateInfoSection: Recebido:", projectInfo);
+      hideLoaders();
+      // Check if the received object is valid and doesn't have our custom error flag
+      if (projectInfo && !projectInfo.error) {
+        console.log("[SIDEBAR] updateInfoSection: Atualizando DOM...");
+        var floorplanLink = document.getElementById('floorplan-link');
+        floorplanLink.href = projectInfo.floorplanUrl || '#';
+        floorplanLink.innerText = (projectInfo.floorplanUrl && projectInfo.floorplanUrl !== '#') ? 'Abrir Documento' : 'N/A';
+        document.getElementById('client-name').innerText = projectInfo.clientName || 'N/A';
+        document.getElementById('client-address').innerText = projectInfo.clientAddress || 'N/A';
+        document.getElementById('client-nif').innerText = projectInfo.clientNif || 'N/A';
+        document.getElementById('client-email').innerText = projectInfo.clientEmail || 'N/A';
+        console.log("[SIDEBAR] updateInfoSection: DOM atualizado.");
+      } else {
+         // Handle cases where projectInfo might be null, undefined, or our custom error object
+         console.log("[SIDEBAR] updateInfoSection: projectInfo indica erro ou é inválido. Chamando onInfoFailure.");
+         // Pass the error message from the object if it exists
+         onInfoFailure(projectInfo || { message: 'Dados recebidos inválidos do script (updateInfoSection).' });
+      }
+    }
+
+    // --- Status & Error Display ---
+    function showStatusMessage(elementId, message) {
+        hideLoaders();
+        var statusArea = document.getElementById(elementId);
+        if (!statusArea) return;
+        console.log("[SIDEBAR] showStatusMessage for #" + elementId + ":", message);
+        if (message && typeof message === 'string') {
+            if (message.toLowerCase().startsWith('http')) { // PDF link
+                var linkText = (elementId === 'pdf-status') ? 'PDF Sumário Gerado! Clique para abrir.' : 'PDF Orçamento Gerado! Clique para abrir.';
+                statusArea.innerHTML = '<a href="' + message + '" target="_blank">' + linkText + '</a>';
+            } else if (message.toLowerCase().startsWith('erro:')) { // Error
+                statusArea.innerHTML = '<span class="error">' + message + '</span>';
+            } else if (message.includes("Nenhum texto encontrado")) { // Warning
+                 statusArea.innerHTML = '<span class="warning">' + message + '</span>';
+            } else { // Success
+                statusArea.innerHTML = '<span class="success">' + message + '</span>';
+            }
+        } else { // Unexpected
+            statusArea.innerHTML = '<span class="error">Resposta inesperada recebida.</span>';
+             console.error("Unexpected result type for status message:", message);
+        }
+    }
+
+    function onFailure(error, statusElementId = null) {
+      console.error("[SIDEBAR] onFailure: Apps Script call failed: ", error);
+      hideLoaders();
+      var message = 'Ocorreu um erro: ' + (error.message || 'Erro desconhecido.');
+      if (statusElementId) {
+          var statusArea = document.getElementById(statusElementId);
+          if (statusArea) {
+              statusArea.innerHTML = '<span class="error">' + message + '</span>';
+          } else {
+              alert(message); // Fallback to alert if status area not found
+          }
+      } else {
+        alert(message); // Generic alert if no specific status area
+      }
+    }
+
+    function onInfoFailure(error) {
+      console.error("[SIDEBAR] onInfoFailure: Failed to load project info: ", error);
+      hideLoaders();
+      var errorDiv = document.getElementById('info-error');
+      // Use the message from the error object if available
+      errorDiv.innerText = 'Erro Info: ' + (error.message || 'Detalhes indisponíveis.');
+      errorDiv.style.display = 'block';
+      clearInfoPlaceholders(true); // Clear placeholders and show 'Erro'
+    }
+
+    // --- Utility Functions ---
+     function clearInfoPlaceholders(isError = false) {
+       var errorText = isError ? 'Erro' : '...';
+       var floorplanLink = document.getElementById('floorplan-link');
+       floorplanLink.innerText = isError ? 'Erro' : 'A carregar...';
+       floorplanLink.href = '#';
+       document.getElementById('client-name').innerText = errorText;
+       document.getElementById('client-address').innerText = errorText;
+       document.getElementById('client-nif').innerText = errorText;
+       document.getElementById('client-email').innerText = errorText;
+     }
+
+     function clearAllStatusMessages() {
+        var errorDiv = document.getElementById('info-error');
+        var pdfStatus = document.getElementById('pdf-status');
+        var formatStatus = document.getElementById('format-status');
+        var quoteStatus = document.getElementById('quote-status'); // Added quote status
+        if(errorDiv) { errorDiv.style.display = 'none'; errorDiv.innerText = ''; }
+        if(pdfStatus) { pdfStatus.innerText = '';}
+        if(formatStatus) { formatStatus.innerText = '';}
+        if(quoteStatus) { quoteStatus.innerText = '';} // Clear quote status
+     }
+     function showLoader(loaderId) {
+       var loader = document.getElementById(loaderId);
+       if(loader) loader.style.display = 'block';
+     }
+
+     function hideLoaders() {
+       var infoLoader = document.getElementById('info-loader');
+       var actionLoader = document.getElementById('action-loader');
+       if(infoLoader) infoLoader.style.display = 'none';
+       if(actionLoader) actionLoader.style.display = 'none';
+        console.log("[SIDEBAR] hideLoaders: Loaders escondidos.");
+     }
+
+    // Load initial data when the sidebar opens
+     console.log("[SIDEBAR] Adicionando event listener para 'load'.");
+     window.addEventListener('load', loadInitialData);
+
+  </script>
+</body>
+</html>
