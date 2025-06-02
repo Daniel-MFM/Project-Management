@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+     <link href="https://fonts.googleapis.com/css2?family=Reddit+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+     <style>
+       /* Apply font and basic styling */
+       body {
+         padding: 20px;
+         font-family: 'Reddit Sans Condensed', sans-serif;
+         font-size: 14px;
+         text-align: center; /* Center content */
+       }
+       p {
+         margin-bottom: 15px; /* Space below text */
+       }
+       button {
+         margin: 0 5px; /* Space between buttons */
+         padding: 8px 16px; /* Make buttons slightly larger */
+       }
+     </style>
+  </head>
+  <body>
+    <p>Deseja abrir o Painel de Controlo?</p>
+    <div>
+      <button class="blue" onclick="openSidebarAndClose()">Abrir Painel</button>
+      <button onclick="google.script.host.close()">Agora Não</button>
+    </div>
+
+    <script>
+      function openSidebarAndClose() {
+        // Call the function in Code.gs that shows the *actual* sidebar
+        google.script.run.showSidebar();
+        // Close this dialog window
+        google.script.host.close();
+      }
+    </script>
+  </body>
+</html>
