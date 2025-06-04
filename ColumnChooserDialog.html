@@ -62,17 +62,17 @@
     #saved-states-list .saved-state-name { flex-grow: 1; }
     #saved-states-list .saved-state-actions button {
       margin-left: 5px;
-      padding: 4px 7px; 
-      font-size: 11px; 
-      text-transform: none; 
-      min-width: auto; 
+      padding: 4px 7px;
+      font-size: 11px;
+      text-transform: none;
+      min-width: auto;
       border: 1px solid #ccc; /* Added border for definition */
       background-color: #f8f9fa;
     }
      #saved-states-list .saved-state-actions button:hover { background-color: #e9ecef;}
 
     #save-state-name {
-      width: 100%; 
+      width: 100%;
       padding: 7px;
       border: 1px solid #ccc;
       border-radius: 3px;
@@ -84,7 +84,7 @@
       padding: 8px 12px;
       text-transform: uppercase;
       font-size: 13px;
-      background-color: #4d90fe; 
+      background-color: #4d90fe;
       color: white;
       border: 1px solid #3079ed;
       border-radius: 2px;
@@ -116,7 +116,7 @@
        background-color: #f8f9fa; color: #3c4043; border: 1px solid #ccc; border-radius:2px;
     }
     button#column-chooser-cancel:hover { background-color: #e9ecef; }
-    
+
     .loader-local { /* For local loaders within the dialog */
         font-style: italic; color: #888; display: none; padding: 5px 0; font-size: 12px;
     }
@@ -129,7 +129,7 @@
 
   <!-- Main Dialog Structure -->
   <h3 id="column-chooser-title">Personalizar Vista</h3>
-  
+
   <div id="column-chooser-list-container">
     <label style="font-weight:bold; font-size:13px; display:block; margin-bottom:4px;">Colunas Visíveis:</label>
     <div id="column-chooser-list">
@@ -169,7 +169,7 @@
       </div>
       <div id="custom-view-state-status"></div>
   </div>
-  
+
   <div id="column-chooser-error" class="error-message"></div>
   <div id="column-chooser-status" class="status-message"></div>
 
@@ -182,8 +182,9 @@
     // --- Global variables within this dialog's scope ---
     const DEBUG_MODE = false; // Set to true for verbose logging in this dialog
     // viewName is injected by Code.gs using HtmlTemplate
-    // Example: var template = HtmlService.createTemplateFromFile("ColumnChooserDialog"); template.viewName = "MyView";
-    var currentColumnChooserViewName = "<?!= viewName ?>"; 
+    console.log("[DIALOG] Raw template data for viewName (should be stringified): " + <?= JSON.stringify(viewName) ?>);
+    var currentColumnChooserViewName = <?= JSON.stringify(viewName) ?>;
+    if (typeof console !== 'undefined') { console.log("[DIALOG] Initialized currentColumnChooserViewName: '" + currentColumnChooserViewName + "'"); }
 
     const columnChooserList = document.getElementById('column-chooser-list');
     const columnChooserTitle = document.getElementById('column-chooser-title');
@@ -191,7 +192,7 @@
     const columnChooserStatus = document.getElementById('column-chooser-status');
     const cancelColumnChooserButton = document.getElementById('column-chooser-cancel');
     const applyColumnChooserButton = document.getElementById('column-chooser-apply');
-    
+
     const savedStatesList = document.getElementById('saved-states-list');
     const saveStateNameInput = document.getElementById('save-state-name');
     const saveCurrentStateButton = document.getElementById('save-current-state-button');
@@ -204,22 +205,26 @@
 
     // --- Initialization ---
     // The main logic will run once currentColumnChooserViewName is confirmed.
-    // Using window.onload to ensure the whole DOM is ready, though with script at end of body, it's mostly true.
     window.addEventListener('load', function() {
       if (DEBUG_MODE) console.log("[DIALOG] Window loaded. View name from template: ", currentColumnChooserViewName);
-      if (!currentColumnChooserViewName || currentColumnChooserViewName === "<?!= viewName ?>") {
-         // This check is in case the templating failed or was not replaced.
-         currentColumnChooserViewName = "ErrorNoViewName"; // Fallback or error state
-         if (DEBUG_MODE) console.error("[DIALOG] viewName was not properly injected by template. Using fallback:", currentColumnChooserViewName);
+      // Check if viewName was properly injected and is a non-empty string
+      if (typeof currentColumnChooserViewName !== 'string' || currentColumnChooserViewName.trim() === "") {
+         if (DEBUG_MODE) console.error("[DIALOG] viewName was not properly injected or is empty. Value: '" + currentColumnChooserViewName + "'");
+         // Update the error placeholder and disable interactions
+         onColumnChooserFailure({message: "Diálogo não inicializado corretamente. Nome da vista em falta."}, "Erro de Configuração");
+         applyColumnChooserButton.disabled = true;
+         saveCurrentStateButton.disabled = true;
+         columnChooserList.innerHTML = '<p style="color:red; font-weight:bold;">Erro: Diálogo não inicializado. Nome da vista em falta.</p>';
+         return; // Stop further initialization
       }
-      initializeDialog(); // Changed from openColumnChooserLogic to initializeDialog
+      initializeDialog();
     });
 
     function showDialogLoader(loaderId, show = true) {
         const loader = document.getElementById(loaderId);
         if (loader) loader.style.display = show ? 'block' : 'none';
     }
-    
+
     function hideAllDialogLoaders() {
         showDialogLoader('column-list-loader', false);
         PREDEFINED_FILTER_COLUMNS.forEach(headerName => {
@@ -228,19 +233,11 @@
         });
     }
 
-    function initializeDialog() { // Renamed from openColumnChooserLogic
-      if (!currentColumnChooserViewName || currentColumnChooserViewName === "ErrorNoViewName") {
-        onColumnChooserFailure({message: "Nome da vista não configurado para o diálogo."}, "Erro Crítico de Configuração");
-        // Disable all interactive elements as the dialog is not properly configured
-        applyColumnChooserButton.disabled = true;
-        saveCurrentStateButton.disabled = true;
-        // Consider hiding lists or showing a more prominent error message in the main body
-        columnChooserList.innerHTML = '<p style="color:red; font-weight:bold;">Erro: Diálogo não inicializado corretamente. Nome da vista em falta.</p>';
-        return;
-      }
+    function initializeDialog() {
+      // The check for currentColumnChooserViewName is now done in the onload listener
       if (DEBUG_MODE) console.log("[DIALOG] Initializing for view:", currentColumnChooserViewName);
 
-      resetColumnChooserDialog(); 
+      resetColumnChooserDialog();
       columnChooserTitle.innerText = "Personalizar Vista: " + currentColumnChooserViewName;
       showDialogLoader('column-list-loader', true);
 
@@ -251,8 +248,8 @@
             .withSuccessHandler(function(visibilityStates) {
               if (DEBUG_MODE) console.log("[DIALOG] getCurrentColumnVisibility success for " + currentColumnChooserViewName + ":", visibilityStates);
               populateColumnChooserList(headers, visibilityStates);
-              populateFilterDropdowns(currentColumnChooserViewName); 
-              loadAndDisplaySavedStates(currentColumnChooserViewName); 
+              populateFilterDropdowns(currentColumnChooserViewName);
+              loadAndDisplaySavedStates(currentColumnChooserViewName);
               hideAllDialogLoaders();
             })
             .withFailureHandler(function(error) {
@@ -267,12 +264,12 @@
         })
         .getViewHeaders(currentColumnChooserViewName);
     }
-    
+
     function populateFilterDropdowns(viewName) {
       PREDEFINED_FILTER_COLUMNS.forEach(function(headerName) {
         const safeHeaderName = headerName.replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase();
         const selectElement = document.querySelector(`#column-chooser-filters select[data-filter-header="${headerName}"]`);
-        
+
         if (!selectElement) {
           if (DEBUG_MODE) console.warn(`[DIALOG] Filter select element for "${headerName}" not found.`);
           return;
@@ -306,7 +303,7 @@
     }
 
     function populateColumnChooserList(headers, visibilityStates) {
-      columnChooserList.innerHTML = ''; 
+      columnChooserList.innerHTML = '';
       if (!headers || headers.length === 0) {
         columnChooserList.innerHTML = '<span>Nenhum cabeçalho encontrado.</span>';
         return;
@@ -317,7 +314,7 @@
         checkbox.type = 'checkbox';
         const safeIdText = headerText.replace(/[^a-zA-Z0-9-_]/g, '').replace(/\s+/g, '-');
         checkbox.id = 'chk-header-' + safeIdText;
-        checkbox.name = headerText; 
+        checkbox.name = headerText;
         checkbox.checked = visibilityStates[headerText] === true;
 
         const label = document.createElement('label');
@@ -329,19 +326,19 @@
         columnChooserList.appendChild(itemDiv);
       });
     }
-    
+
     function resetColumnChooserDialog() {
         columnChooserList.innerHTML = '';
         columnChooserError.innerText = ''; columnChooserError.style.display = 'none';
         columnChooserStatus.innerText = ''; columnChooserStatus.style.display = 'none';
         customViewStateStatus.innerText = ''; customViewStateStatus.className = ''; customViewStateStatus.style.display = 'none';
-        saveStateNameInput.value = ''; 
+        saveStateNameInput.value = '';
 
         PREDEFINED_FILTER_COLUMNS.forEach(function(headerName) {
             const selectElement = document.querySelector(`#column-chooser-filters select[data-filter-header="${headerName}"]`);
             if (selectElement) {
-                selectElement.value = ""; 
-                selectElement.disabled = false; 
+                selectElement.value = "";
+                selectElement.disabled = false;
                 let nextSibling = selectElement.nextElementSibling;
                 if (nextSibling && nextSibling.tagName === 'SPAN' && nextSibling.style.color === 'red') {
                     nextSibling.remove();
@@ -349,27 +346,27 @@
                  while (selectElement.options.length > 1) { selectElement.remove(1); }
             }
         });
-        savedStatesList.innerHTML = '<p>A carregar...</p>'; 
+        savedStatesList.innerHTML = '<p>A carregar...</p>';
         if (DEBUG_MODE) console.log("[DIALOG] Column Chooser dialog reset.");
     }
 
     function closeDialog() { // Renamed from closeColumnChooser
       google.script.host.close();
     }
-    
+
     function showStatusMessageInDialog(message, isError = false) {
         columnChooserStatus.innerText = message;
         columnChooserStatus.className = isError ? 'error-message' : 'success-message';
         columnChooserStatus.style.color = isError ? 'red' : '#188038';
         columnChooserStatus.style.display = 'block';
-        columnChooserError.style.display = 'none'; 
+        columnChooserError.style.display = 'none';
     }
-    
+
     function showStatusMessageInCustomStateSection(message, isSuccess) {
       customViewStateStatus.textContent = message;
       customViewStateStatus.className = isSuccess ? 'success' : 'error';
       customViewStateStatus.style.display = 'block';
-      setTimeout(function() { 
+      setTimeout(function() {
           customViewStateStatus.textContent = '';
           customViewStateStatus.style.display = 'none';
           customViewStateStatus.className = '';
@@ -381,9 +378,9 @@
         // hideAllDialogLoaders(); // Ensure all specific loaders are hidden
         columnChooserError.innerText = (error && error.message) ? error.message : defaultMessage;
         columnChooserError.style.display = 'block';
-        columnChooserStatus.style.display = 'none'; 
+        columnChooserStatus.style.display = 'none';
     }
-    
+
     function loadAndDisplaySavedStates(viewName) {
       if (!viewName) return;
       savedStatesList.innerHTML = '<div class="loader-local" style="display:block;">A carregar...</div>';
@@ -392,7 +389,7 @@
       google.script.run
         .withSuccessHandler(function(states) {
           if (DEBUG_MODE) console.log("[DIALOG] getCustomViewStates success for " + viewName + ":", states);
-          savedStatesList.innerHTML = ''; 
+          savedStatesList.innerHTML = '';
           if (states && states.length > 0) {
             states.forEach(function(state) {
               const item = document.createElement('div'); item.className = 'saved-state-item';
@@ -444,8 +441,8 @@
       google.script.run
         .withSuccessHandler(function(message) {
             showStatusMessageInCustomStateSection(message, true);
-            loadAndDisplaySavedStates(currentColumnChooserViewName); 
-            saveStateNameInput.value = ''; 
+            loadAndDisplaySavedStates(currentColumnChooserViewName);
+            saveStateNameInput.value = '';
         })
         .withFailureHandler(function(error) {
             showStatusMessageInCustomStateSection(error.message || 'Erro desconhecido ao guardar.', false);
@@ -463,11 +460,11 @@
         customViewStateStatus.textContent = "A carregar '" + stateName + "'..."; customViewStateStatus.className="info"; customViewStateStatus.style.display='block';
         google.script.run
             .withSuccessHandler(function(message) {
-                showStatusMessageInDialog(message); 
-                setTimeout(closeDialog, 1500); 
+                showStatusMessageInDialog(message);
+                setTimeout(closeDialog, 1500);
             })
             .withFailureHandler(function(error) {
-                onColumnChooserFailure(error, "Erro ao carregar configuração."); 
+                onColumnChooserFailure(error, "Erro ao carregar configuração.");
             })
             .applyCustomViewState(currentColumnChooserViewName, stateName);
       } else if (target.classList.contains('delete-state-button')) {
@@ -477,7 +474,7 @@
           google.script.run
             .withSuccessHandler(function(message) {
                 showStatusMessageInCustomStateSection(message, true);
-                loadAndDisplaySavedStates(currentColumnChooserViewName); 
+                loadAndDisplaySavedStates(currentColumnChooserViewName);
             })
             .withFailureHandler(function(error) {
                 showStatusMessageInCustomStateSection(error.message || 'Erro desconhecido ao eliminar.', false);
@@ -486,7 +483,7 @@
         }
       }
     });
-    
+
     applyColumnChooserButton.addEventListener('click', function() {
         if (!currentColumnChooserViewName) {
             onColumnChooserFailure({ message: "Nome da vista não definido." }, "Erro interno.");
@@ -513,7 +510,7 @@
                     .withSuccessHandler(function(filterMsg) {
                         if (DEBUG_MODE) console.log("[DIALOG] applyViewFilters success:", filterMsg);
                         showStatusMessageInDialog("Configurações aplicadas com sucesso!");
-                        setTimeout(closeDialog, 1500); 
+                        setTimeout(closeDialog, 1500);
                     })
                     .withFailureHandler(function(err) { onColumnChooserFailure(err, "Erro ao aplicar filtros."); })
                     .applyViewFilters(currentColumnChooserViewName, filterSettings);

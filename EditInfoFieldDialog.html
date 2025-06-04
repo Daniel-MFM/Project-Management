@@ -72,7 +72,7 @@
   <div>
     <!-- Input field will be text or textarea based on fieldName, determined by JS or could be templated -->
     <!-- For now, JS will handle replacing this placeholder if needed, or we assume input is default -->
-    <textarea id="edit-value-input" rows="4"></textarea> 
+    <textarea id="edit-value-input" rows="4"></textarea>
   </div>
   <div id="dialog-status"></div>
   <div class="buttons">
@@ -92,7 +92,7 @@
 
     window.addEventListener('load', function() {
       if (DEBUG_MODE) console.log("Dialog loaded. Field:", fieldName, "Value:", currentValue);
-      
+
       // Determine if textarea is more appropriate (e.g., for addresses)
       // For this version, we'll stick to one type of input (textarea) for simplicity of the HTML.
       // If 'clientAddress' or a field known to be multi-line, ensure it's a textarea or adjust height.

@@ -68,12 +68,58 @@ function onOpen() {
  */
 function showEditInfoFieldModal(fieldName, currentValue) {
   try {
+    // It's crucial that fieldName is one of the keys in PROJECT_INFO_CELL_MAP for security and correctness.
+    // And currentValue should be defined, though it can be an empty string.
+    if (!fieldName || !PROJECT_INFO_CELL_MAP.hasOwnProperty(fieldName) || typeof currentValue === 'undefined') {
+      var errorMsg = "showEditInfoFieldModal: Argumentos inválidos. fieldName: " + fieldName + ", currentValue: " + currentValue;
+      Logger.log(errorMsg);
+      SpreadsheetApp.getUi().alert("Erro: Não é possível editar o campo. " + errorMsg);
+      return;
+    }
+
+    Logger.log("showEditInfoFieldModal: Called for fieldName = '" + fieldName + "', currentValue = '" + currentValue + "'");
+
+    var template = HtmlService.createTemplateFromFile("EditInfoFieldDialog");
+    template.fieldName = fieldName;
+    template.currentValue = currentValue;
+
+    // Create a user-friendly title
+    var dialogTitle = "Editar ";
+    switch(fieldName) {
+      case "clientName": dialogTitle += "Nome do Cliente"; break;
+      case "clientAddress": dialogTitle += "Morada do Cliente"; break;
+      case "clientNif": dialogTitle += "NIF do Cliente"; break;
+      case "clientEmail": dialogTitle += "Email do Cliente"; break;
+      case "floorplanUrl": dialogTitle += "Link da Planta"; break;
+      default: dialogTitle += fieldName; // Fallback to raw fieldName if not mapped
+    }
+
+    var htmlOutput = template.evaluate()
+        .setWidth(350)
+        .setHeight(280);
+
+    SpreadsheetApp.getUi().showModalDialog(htmlOutput, dialogTitle);
+    Logger.log("showEditInfoFieldModal: Dialog displayed for fieldName = '" + fieldName + "'");
+
+  } catch (e) {
+    Logger.log("Error in showEditInfoFieldModal: " + e.message + " (Stack: " + e.stack + ")");
+    SpreadsheetApp.getUi().alert("Erro ao tentar mostrar o diálogo de edição: " + e.message);
+  }
+}
+
+/**
+ * Shows a modal dialog to edit a specific project information field.
+ * @param {string} fieldName The name of the field to be edited (e.g., "clientName").
+ * @param {string} currentValue The current value of the field.
+ */
+function showEditInfoFieldModal(fieldName, currentValue) {
+  try {
     if (!fieldName || typeof currentValue === 'undefined') { // currentValue can be empty string, so check for undefined
       Logger.log("showEditInfoFieldModal: fieldName or currentValue is missing. fieldName: " + fieldName + ", currentValue: " + currentValue);
       SpreadsheetApp.getUi().alert("Erro: Informação incompleta para editar o campo.");
       return;
     }
-    
+
     // Optional: Validate fieldName against PROJECT_INFO_CELL_MAP keys if desired server-side,
     // though client-side should ideally only send valid fieldNames.
     if (!PROJECT_INFO_CELL_MAP.hasOwnProperty(fieldName)) {
@@ -101,7 +147,7 @@ function showEditInfoFieldModal(fieldName, currentValue) {
     var htmlOutput = template.evaluate()
         .setWidth(350)  // Adjusted width
         .setHeight(280); // Adjusted height
-    
+
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, dialogTitle);
     Logger.log("showEditInfoFieldModal: Dialog displayed for fieldName = '" + fieldName + "'");
 
@@ -139,17 +185,17 @@ function updateProjectInfoField(fieldName, newValue) {
     SpreadsheetApp.flush(); // Apply the change immediately
 
     Logger.log("updateProjectInfoField: Field '" + fieldName + "' (Cell: " + cellNotation + ") updated successfully to: " + newValue);
-    return { 
-      success: true, 
+    return {
+      success: true,
       message: "'" + fieldName + "' atualizado com sucesso para: '" + newValue + "'.", // Simple name for now, can map to PT-PT later
-      updatedField: fieldName, 
-      value: newValue 
+      updatedField: fieldName,
+      value: newValue
     };
 
   } catch (error) {
     Logger.log("Error in updateProjectInfoField: " + error.message + " (Stack: " + error.stack + ")");
     // Re-throw with a user-friendly message, potentially including the original if it's already user-friendly
-    if (error.message.startsWith("Erro ao") || error.message.startsWith("Nome de campo inválido")) { 
+    if (error.message.startsWith("Erro ao") || error.message.startsWith("Nome de campo inválido")) {
         throw error;
     }
     throw new Error("Erro ao atualizar o campo '" + fieldName + "': " + error.message);
@@ -170,12 +216,14 @@ function showColumnChooserModal(viewName) {
     Logger.log("showColumnChooserModal: Called for viewName = '" + viewName + "'");
 
     var template = HtmlService.createTemplateFromFile("ColumnChooserDialog");
+    Logger.log("showColumnChooserModal: Preparing dialog. viewName received by function: '" + viewName + "'. Passing to template.");
     template.viewName = viewName; // Pass viewName to the template for client-side access
+    // Logger.log("showColumnChooserModal: template.viewName set to: '" + template.viewName + "'"); // This log might not be very insightful for complex objects
 
     var htmlOutput = template.evaluate()
         .setWidth(380)  // Adjusted width
         .setHeight(580); // Adjusted height, might need further tuning based on content
-    
+
     SpreadsheetApp.getUi().showModalDialog(htmlOutput, "Personalizar Vista: " + viewName);
     Logger.log("showColumnChooserModal: Dialog displayed for viewName = '" + viewName + "'");
 
@@ -310,7 +358,7 @@ function applyCustomViewState(viewName, stateName) {
       Logger.log("Error parsing settings for state '" + stateName + "' (key '" + propertyKey + "'): " + parseError.message);
       throw new Error("Erro ao ler as configurações do estado guardado '" + stateName + "'.");
     }
-    
+
     if (!parsedSettings.columnVisibility || !parsedSettings.filterSettings) {
         Logger.log("applyCustomViewState: Settings object for state '" + stateName + "' is malformed. Missing columnVisibility or filterSettings.");
         throw new Error("Configurações para o estado '" + stateName + "' estão malformadas.");
