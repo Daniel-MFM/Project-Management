@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Reddit+Sans+Condensed:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      padding: 15px;
+      font-family: 'Reddit Sans Condensed', sans-serif;
+      font-size: 14px;
+      margin: 0;
+      background-color: #f9f9f9; /* Light background for the dialog */
+    }
+    body, p, span, a, button, h3, div, label, input, select, textarea {
+      font-family: 'Reddit Sans Condensed', sans-serif;
+      box-sizing: border-box;
+    }
+    #edit-value-input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    textarea#edit-value-input {
+      min-height: 80px; /* For address or other multiline fields */
+      resize: vertical;
+    }
+    .buttons {
+      text-align: right;
+      margin-top: 15px;
+    }
+    button {
+      margin-left: 8px;
+      padding: 8px 15px;
+      text-transform: uppercase;
+      font-weight: bold;
+      border-radius: 2px;
+      border: 1px solid transparent;
+    }
+    button#save-button { /* Matches .blue or action button style */
+      background-color: #4d90fe;
+      color: white;
+      border-color: #3079ed;
+    }
+    button#save-button:hover {
+      background-color: #357ae8;
+    }
+    button#cancel-button {
+      background-color: #f8f9fa;
+      color: #3c4043;
+      border-color: #ccc;
+    }
+    button#cancel-button:hover {
+      background-color: #e9ecef;
+    }
+    #dialog-status {
+      font-size: 12px;
+      min-height: 1.5em;
+      margin-top: 8px;
+      padding: 2px;
+    }
+    .status-error { color: red; font-weight: bold;}
+    .status-saving { color: #555; font-style: italic;}
+  </style>
+</head>
+<body>
+  <div>
+    <!-- Input field will be text or textarea based on fieldName, determined by JS or could be templated -->
+    <!-- For now, JS will handle replacing this placeholder if needed, or we assume input is default -->
+    <textarea id="edit-value-input" rows="4"></textarea>
+  </div>
+  <div id="dialog-status"></div>
+  <div class="buttons">
+    <button id="cancel-button">Cancelar</button>
+    <button id="save-button" class="blue">Guardar</button>
+  </div>
+
+  <script>
+    var fieldName = "<?!= fieldName ?>";
+    var currentValue = "<?!= currentValue ?>";
+    var DEBUG_MODE = false; // Set to true for local dialog debugging
+
+    const inputElement = document.getElementById('edit-value-input');
+    const saveButton = document.getElementById('save-button');
+    const cancelButton = document.getElementById('cancel-button');
+    const statusElement = document.getElementById('dialog-status');
+
+    window.addEventListener('load', function() {
+      if (DEBUG_MODE) console.log("Dialog loaded. Field:", fieldName, "Value:", currentValue);
+
+      // Determine if textarea is more appropriate (e.g., for addresses)
+      // For this version, we'll stick to one type of input (textarea) for simplicity of the HTML.
+      // If 'clientAddress' or a field known to be multi-line, ensure it's a textarea or adjust height.
+      // The HTML already uses a textarea, so this is mostly for value setting.
+      inputElement.value = currentValue;
+      inputElement.focus(); // Focus on the input field when dialog opens
+      if (fieldName === "clientAddress") { // Example: make textarea larger for address
+        inputElement.rows = 4;
+      } else {
+        inputElement.rows = 2; // Default smaller for other fields
+      }
+    });
+
+    function setButtonsDisabled(disabled) {
+        saveButton.disabled = disabled;
+        cancelButton.disabled = disabled;
+    }
+
+    saveButton.addEventListener('click', function() {
+      var newValue = inputElement.value;
+      statusElement.textContent = "A guardar...";
+      statusElement.className = 'status-saving';
+      setButtonsDisabled(true);
+
+      if (DEBUG_MODE) console.log("Saving field:", fieldName, "New value:", newValue);
+
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if (DEBUG_MODE) console.log("Save success response:", response);
+          setButtonsDisabled(false);
+          if (response && response.success) {
+            google.script.host.close();
+          } else {
+            statusElement.textContent = (response && response.message) ? response.message : "Erro desconhecido ao guardar.";
+            statusElement.className = 'status-error';
+          }
+        })
+        .withFailureHandler(function(error) {
+          if (DEBUG_MODE) console.error("Save failure error:", error);
+          setButtonsDisabled(false);
+          statusElement.textContent = error.message || "Erro ao comunicar com o servidor.";
+          statusElement.className = 'status-error';
+        })
+        .updateProjectInfoField(fieldName, newValue);
+    });
+
+    cancelButton.addEventListener('click', function() {
+      google.script.host.close();
+    });
+
+    window.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        google.script.host.close();
+      }
+    });
+  </script>
+</body>
+</html>

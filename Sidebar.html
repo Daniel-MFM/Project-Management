@@ -46,6 +46,23 @@
      button.blue { /* Inherits from add-ons.css */ }
      button.blue:hover { /* Inherits hover */ }
 
+     /* Cog button styling */
+    .view-button-container { display: flex; align-items: center; width: 95%; margin: 8px auto; }
+    .view-button-container button.blue { flex-grow: 1; margin: 0; } /* Main button takes available space */
+    .cog-button {
+      width: 30px !important; /* Fixed width for cog */
+      min-width: 30px !important; /* Override add-ons.css */
+      height: 30px;
+      padding: 5px !important;
+      margin-left: 8px !important;
+      font-size: 16px; /* Adjust icon size */
+      line-height: 1; /* Center icon better */
+      border: 1px solid #ccc !important; /* Match other buttons a bit */
+      background-color: #f8f9fa; /* Light background */
+      color: #3c4043; /* Icon color */
+    }
+    .cog-button:hover { background-color: #e9ecef; }
+
      /* Info section styling */
      .info-section { margin-top: 15px; }
      .info-section p.planta-line { margin: 5px 0 10px 0; font-size: 13px; line-height: 1.5; word-wrap: break-word; }
@@ -79,14 +96,29 @@
 <body>
   <h3>VISUALIZAÇÕES</h3>
   <div class="view-buttons">
-    <button class="blue summary-button-layout" onclick="callAppsScript('SetViewMario')">Sumário</button>
-    <div class="button-pair">
-      <button class="blue" onclick="callAppsScript('SetViewDefault')">Normal</button>
-      <button class="blue" onclick="callAppsScript('SetViewBudget')">Orçamento</button>
+    <div class="view-button-container">
+      <button class="blue summary-button-layout" onclick="callAppsScript('SetViewResumo')">Sumário</button>
+      <button class="cog-button" data-view-name="Resumo" title="Personalizar Vista Sumário">⚙️</button>
     </div>
     <div class="button-pair">
-      <button class="blue" onclick="callAppsScript('SetViewClient')">Cliente</button>
-      <button class="blue" onclick="callAppsScript('setViewLayout')">Layout</button>
+      <div class="view-button-container" style="width:48%">
+        <button class="blue" onclick="callAppsScript('SetViewDefault')">Normal</button>
+        <button class="cog-button" data-view-name="Default" title="Personalizar Vista Normal">⚙️</button>
+      </div>
+      <div class="view-button-container" style="width:48%">
+        <button class="blue" onclick="callAppsScript('SetViewBudget')">Orçamento</button>
+        <button class="cog-button" data-view-name="Budget" title="Personalizar Vista Orçamento">⚙️</button>
+      </div>
+    </div>
+    <div class="button-pair">
+      <div class="view-button-container" style="width:48%">
+        <button class="blue" onclick="callAppsScript('SetViewClient')">Cliente</button>
+        <button class="cog-button" data-view-name="Client" title="Personalizar Vista Cliente">⚙️</button>
+      </div>
+      <div class="view-button-container" style="width:48%">
+        <button class="blue" onclick="callAppsScript('setViewLayout')">Layout</button>
+        <button class="cog-button" data-view-name="Layout" title="Personalizar Vista Layout">⚙️</button>
+      </div>
     </div>
   </div>
 
@@ -126,11 +158,12 @@
   <div id="action-loader" class="loader" style="margin-top: 10px;">A processar...</div>
 
   <script>
-    console.log("[SIDEBAR] Script block loaded.");
+    const DEBUG_MODE = true; // Set to true to enable verbose console logging for sidebar
+    if (DEBUG_MODE) console.log("[SIDEBAR] Script block loaded.");
 
     // --- Generic Function Callers ---
     function callAppsScript(functionName) {
-      console.log("[SIDEBAR] Calling Apps Script function:", functionName);
+      if (DEBUG_MODE) console.log("[SIDEBAR] Calling Apps Script function:", functionName);
       showLoader('action-loader');
       clearAllStatusMessages();
       google.script.run
@@ -140,7 +173,7 @@
     }
 
     function callWithStatusUpdate(functionName, statusElementId, statusVerb) {
-        console.log("[SIDEBAR] Calling Apps Script function with status:", functionName);
+        if (DEBUG_MODE) console.log("[SIDEBAR] Calling Apps Script function with status:", functionName);
         showLoader('action-loader');
         clearAllStatusMessages();
         var statusArea = document.getElementById(statusElementId);
@@ -174,29 +207,25 @@
 
     // --- Initial Data Loading ---
     function loadInitialData() {
-      console.log("[SIDEBAR] loadInitialData: Iniciando...");
+      if (DEBUG_MODE) console.log("[SIDEBAR] loadInitialData: Iniciando...");
       showLoader('info-loader');
       clearAllStatusMessages();
       clearInfoPlaceholders();
-      try {
-        google.script.run
-          .withSuccessHandler(updateInfoSection)
-          .withFailureHandler(onInfoFailure)
-          .getProjectInfo();
-         console.log("[SIDEBAR] loadInitialData: Chamada para getProjectInfo enviada.");
-      } catch (e) {
-          console.error("[SIDEBAR] loadInitialData: Erro ao chamar google.script.run:", e);
-          onInfoFailure({ message: "Erro no lado do cliente ao chamar script." });
-      }
+      // try-catch removed as per requirement; withFailureHandler is sufficient
+      google.script.run
+        .withSuccessHandler(updateInfoSection)
+        .withFailureHandler(onInfoFailure)
+        .getProjectInfo();
+      if (DEBUG_MODE) console.log("[SIDEBAR] loadInitialData: Chamada para getProjectInfo enviada.");
     }
 
     // --- Callback Handlers ---
     function updateInfoSection(projectInfo) {
-      console.log("[SIDEBAR] updateInfoSection: Recebido:", projectInfo);
+      if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: Recebido:", projectInfo);
       hideLoaders();
       // Check if the received object is valid and doesn't have our custom error flag
       if (projectInfo && !projectInfo.error) {
-        console.log("[SIDEBAR] updateInfoSection: Atualizando DOM...");
+        if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: Atualizando DOM...");
         var floorplanLink = document.getElementById('floorplan-link');
         floorplanLink.href = projectInfo.floorplanUrl || '#';
         floorplanLink.innerText = (projectInfo.floorplanUrl && projectInfo.floorplanUrl !== '#') ? 'Abrir Documento' : 'N/A';
@@ -204,10 +233,10 @@
         document.getElementById('client-address').innerText = projectInfo.clientAddress || 'N/A';
         document.getElementById('client-nif').innerText = projectInfo.clientNif || 'N/A';
         document.getElementById('client-email').innerText = projectInfo.clientEmail || 'N/A';
-        console.log("[SIDEBAR] updateInfoSection: DOM atualizado.");
+        if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: DOM atualizado.");
       } else {
          // Handle cases where projectInfo might be null, undefined, or our custom error object
-         console.log("[SIDEBAR] updateInfoSection: projectInfo indica erro ou é inválido. Chamando onInfoFailure.");
+         if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: projectInfo indica erro ou é inválido. Chamando onInfoFailure.");
          // Pass the error message from the object if it exists
          onInfoFailure(projectInfo || { message: 'Dados recebidos inválidos do script (updateInfoSection).' });
       }
@@ -218,7 +247,7 @@
         hideLoaders();
         var statusArea = document.getElementById(elementId);
         if (!statusArea) return;
-        console.log("[SIDEBAR] showStatusMessage for #" + elementId + ":", message);
+        if (DEBUG_MODE) console.log("[SIDEBAR] showStatusMessage for #" + elementId + ":", message);
         if (message && typeof message === 'string') {
             if (message.toLowerCase().startsWith('http')) { // PDF link
                 var linkText = (elementId === 'pdf-status') ? 'PDF Sumário Gerado! Clique para abrir.' : 'PDF Orçamento Gerado! Clique para abrir.';
@@ -232,12 +261,12 @@
             }
         } else { // Unexpected
             statusArea.innerHTML = '<span class="error">Resposta inesperada recebida.</span>';
-             console.error("Unexpected result type for status message:", message);
+             if (DEBUG_MODE) console.error("Unexpected result type for status message:", message);
         }
     }
 
     function onFailure(error, statusElementId = null) {
-      console.error("[SIDEBAR] onFailure: Apps Script call failed: ", error);
+      if (DEBUG_MODE) console.error("[SIDEBAR] onFailure: Apps Script call failed: ", error);
       hideLoaders();
       var message = 'Ocorreu um erro: ' + (error.message || 'Erro desconhecido.');
       if (statusElementId) {
@@ -253,7 +282,7 @@
     }
 
     function onInfoFailure(error) {
-      console.error("[SIDEBAR] onInfoFailure: Failed to load project info: ", error);
+      if (DEBUG_MODE) console.error("[SIDEBAR] onInfoFailure: Failed to load project info: ", error);
       hideLoaders();
       var errorDiv = document.getElementById('info-error');
       // Use the message from the error object if available
@@ -294,13 +323,36 @@
        var actionLoader = document.getElementById('action-loader');
        if(infoLoader) infoLoader.style.display = 'none';
        if(actionLoader) actionLoader.style.display = 'none';
-        console.log("[SIDEBAR] hideLoaders: Loaders escondidos.");
+        if (DEBUG_MODE) console.log("[SIDEBAR] hideLoaders: Loaders escondidos.");
      }
 
     // Load initial data when the sidebar opens
-     console.log("[SIDEBAR] Adicionando event listener para 'load'.");
+     if (DEBUG_MODE) console.log("[SIDEBAR] Adicionando event listener para 'load'.");
      window.addEventListener('load', loadInitialData);
 
+    // --- Column Chooser UI Logic (To be removed) ---
+    // All the JavaScript related to the old Column Chooser dialog that was embedded in Sidebar.html
+    // will be removed in this step. The new dialog is in ColumnChooserDialog.html.
+
+    // Add event listeners to all cog buttons to open the MODAL dialog
+    document.querySelectorAll('.cog-button').forEach(function(button) {
+      button.addEventListener('click', function(event) {
+        const viewName = event.currentTarget.dataset.viewName;
+        if (DEBUG_MODE) console.log("[SIDEBAR] Cog clicked, attempting to open modal for view:", viewName);
+        showLoader('action-loader'); // Show sidebar loader while dialog is preparing
+        google.script.run
+          .withSuccessHandler(function() {
+            hideLoaders(); // Hide sidebar loader once dialog is shown (or if it fails)
+            if (DEBUG_MODE) console.log("[SIDEBAR] showColumnChooserModal called successfully on server.");
+            // No specific client-side action needed here as showModalDialog handles the display.
+          })
+          .withFailureHandler(function(error) {
+            hideLoaders(); // Hide sidebar loader
+            onFailure(error, null); // Use general sidebar error handling
+          })
+          .showColumnChooserModal(viewName);
+      });
+    });
   </script>
 </body>
 </html>
