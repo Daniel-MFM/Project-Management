@@ -14,7 +14,7 @@
      h3 { font-size: 15px; font-weight: bold; margin-top: 15px; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
 
      /* --- Button Layout & Styling --- */
-     .view-buttons, .report-buttons, .format-buttons, .quote-buttons { padding: 0 2px; } /* Apply padding */
+     .view-buttons, .report-buttons, .format-buttons, .quote-buttons { padding: 0 2px; }
 
      /* Base styles for ALL section buttons */
      .view-buttons button, .report-buttons button, .format-buttons button, .quote-buttons button {
@@ -25,11 +25,12 @@
        padding: 7px 5px;
        width: 95%;
        margin: 8px auto;
+       cursor: pointer;
      }
      /* Specific layout class for the summary button */
      .summary-button-layout {
        margin-bottom: 12px;
-       font-size: 16px; /* Sumario button slightly larger font */
+       font-size: 16px;
        font-weight: bold;
      }
      /* Container for button pairs */
@@ -42,24 +43,22 @@
      .button-pair button {
        width: 48%; margin: 0; font-size: 13px; padding: 7px 5px;
      }
-     /* Ensure .blue styles apply correctly */
-     button.blue { /* Inherits from add-ons.css */ }
-     button.blue:hover { /* Inherits hover */ }
 
      /* Cog button styling */
     .view-button-container { display: flex; align-items: center; width: 95%; margin: 8px auto; }
-    .view-button-container button.blue { flex-grow: 1; margin: 0; } /* Main button takes available space */
+    .view-button-container button.blue { flex-grow: 1; margin: 0; }
     .cog-button {
-      width: 30px !important; /* Fixed width for cog */
-      min-width: 30px !important; /* Override add-ons.css */
+      width: 30px !important;
+      min-width: 30px !important;
       height: 30px;
       padding: 5px !important;
       margin-left: 8px !important;
-      font-size: 16px; /* Adjust icon size */
-      line-height: 1; /* Center icon better */
-      border: 1px solid #ccc !important; /* Match other buttons a bit */
-      background-color: #f8f9fa; /* Light background */
-      color: #3c4043; /* Icon color */
+      font-size: 16px;
+      line-height: 1;
+      border: 1px solid #ccc !important;
+      background-color: #f8f9fa;
+      color: #3c4043;
+      cursor: pointer;
     }
     .cog-button:hover { background-color: #e9ecef; }
 
@@ -67,7 +66,7 @@
      .info-section { margin-top: 15px; }
      .info-section p.planta-line { margin: 5px 0 10px 0; font-size: 13px; line-height: 1.5; word-wrap: break-word; }
      .info-section p.planta-line .label { font-weight: bold; }
-     .info-section p.planta-line a { text-decoration: none; color: #4285f4; }
+     .info-section p.planta-line a { text-decoration: none; color: #4285f4; cursor: pointer; }
      .info-section p.planta-line a:hover { text-decoration: underline; }
      .info-section table { width: 100%; border-collapse: collapse; margin-top: 5px; }
      .info-section td { padding: 4px 0; vertical-align: top; font-size: 13px; line-height: 1.4; }
@@ -79,17 +78,17 @@
          font-size: 12px;
          margin-top: 5px;
          padding-left: 5px;
-         min-height: 1em; /* Reserve space for status messages */
+         min-height: 1em;
      }
      .loader { font-style: italic; color: #888; display: none; }
      .error-message { color: red; font-weight: bold; display: none; }
-     #pdf-status a, #quote-status a { color: #188038; font-weight: bold; } /* Green link */
-     #pdf-status span, #format-status span, #quote-status span { /* Style for status/error text */
+     #pdf-status a, #quote-status a { color: #188038; font-weight: bold; }
+     #pdf-status span, #format-status span, #quote-status span {
          display: block; margin-top: 3px;
      }
-     #format-status .success, #quote-status .success { color: #188038; } /* Green */
-     #format-status .warning, #quote-status .warning { color: #dd8300; } /* Orange */
-     #format-status .error, #quote-status .error { color: red; } /* Red */
+     .success { color: #188038; }
+     .warning { color: #dd8300; }
+     .error { color: red; }
 
   </style>
 </head>
@@ -97,26 +96,26 @@
   <h3>VISUALIZAÇÕES</h3>
   <div class="view-buttons">
     <div class="view-button-container">
-      <button class="blue summary-button-layout" onclick="callAppsScript('SetViewResumo')">Sumário</button>
+      <button class="blue summary-button-layout" onclick="callViewFunction('SetViewResumo')">Sumário</button>
       <button class="cog-button" data-view-name="Resumo" title="Personalizar Vista Sumário">⚙️</button>
     </div>
     <div class="button-pair">
       <div class="view-button-container" style="width:48%">
-        <button class="blue" onclick="callAppsScript('SetViewDefault')">Normal</button>
+        <button class="blue" onclick="callViewFunction('SetViewDefault')">Normal</button>
         <button class="cog-button" data-view-name="Default" title="Personalizar Vista Normal">⚙️</button>
       </div>
       <div class="view-button-container" style="width:48%">
-        <button class="blue" onclick="callAppsScript('SetViewBudget')">Orçamento</button>
+        <button class="blue" onclick="callViewFunction('SetViewBudget')">Orçamento</button>
         <button class="cog-button" data-view-name="Budget" title="Personalizar Vista Orçamento">⚙️</button>
       </div>
     </div>
     <div class="button-pair">
       <div class="view-button-container" style="width:48%">
-        <button class="blue" onclick="callAppsScript('SetViewClient')">Cliente</button>
+        <button class="blue" onclick="callViewFunction('SetViewClient')">Cliente</button>
         <button class="cog-button" data-view-name="Client" title="Personalizar Vista Cliente">⚙️</button>
       </div>
       <div class="view-button-container" style="width:48%">
-        <button class="blue" onclick="callAppsScript('setViewLayout')">Layout</button>
+        <button class="blue" onclick="callViewFunction('setViewLayout')">Layout</button>
         <button class="cog-button" data-view-name="Layout" title="Personalizar Vista Layout">⚙️</button>
       </div>
     </div>
@@ -124,31 +123,31 @@
 
   <h3>ORÇAMENTO</h3>
   <div class="quote-buttons">
-      <button onclick="prepareQuote()">Preparar Orçamento</button>
-      <button onclick="generateQuotePdfAction()">Gerar PDF Orçamento</button>
+      <button onclick="triggerQuotePreparation()">Preparar Orçamento</button>
+      <button onclick="triggerQuotePdfGeneration()">Gerar PDF Orçamento</button>
       <div id="quote-status"></div>
   </div>
   <h3>RELATÓRIOS</h3>
   <div class="report-buttons">
-      <button onclick="generateSummaryPdfAction()">Gerar PDF Sumário</button>
+      <button onclick="triggerSummaryPdfGeneration()">Gerar PDF Sumário</button>
       <div id="pdf-status"></div>
   </div>
 
   <h3>FORMATAÇÃO</h3>
   <div class="format-buttons">
-      <button onclick="uppercaseSheet()">Texto Maiúsculas (Folha Atual)</button>
+      <button onclick="triggerUppercaseConversion()">Texto Maiúsculas (Folha Atual)</button>
       <div id="format-status"></div>
   </div>
 
   <h3>INFORMAÇÃO</h3>
-  <div class="info-section">
-     <p class="planta-line"><span class="label">Planta Geral:</span> <a id="floorplan-link" href="#" target="_blank">A carregar link...</a></p>
+  <div class="info-section" id="info-section-container">
+     <p class="planta-line"><span class="label">Planta Geral:</span> <a id="floorplan-link" data-field="floorplanUrl" href="#" target="_blank">A carregar link...</a></p>
      <table>
        <tbody>
-         <tr><td class="label-cell">Cliente:</td><td class="data-cell"><span id="client-name">A carregar...</span></td></tr>
-         <tr><td class="label-cell">Morada:</td><td class="data-cell"><span id="client-address">A carregar...</span></td></tr>
-         <tr><td class="label-cell">NIF:</td><td class="data-cell"><span id="client-nif">A carregar...</span></td></tr>
-         <tr><td class="label-cell">Email:</td><td class="data-cell"><span id="client-email">A carregar...</span></td></tr>
+         <tr><td class="label-cell">Cliente:</td><td class="data-cell"><span id="client-name" data-field="clientName">A carregar...</span></td></tr>
+         <tr><td class="label-cell">Morada:</td><td class="data-cell"><span id="client-address" data-field="clientAddress">A carregar...</span></td></tr>
+         <tr><td class="label-cell">NIF:</td><td class="data-cell"><span id="client-nif" data-field="clientNif">A carregar...</span></td></tr>
+         <tr><td class="label-cell">Email:</td><td class="data-cell"><span id="client-email" data-field="clientEmail">A carregar...</span></td></tr>
        </tbody>
      </table>
      <div id="info-loader" class="loader">A carregar informação...</div>
@@ -158,12 +157,96 @@
   <div id="action-loader" class="loader" style="margin-top: 10px;">A processar...</div>
 
   <script>
-    const DEBUG_MODE = true; // Set to true to enable verbose console logging for sidebar
-    if (DEBUG_MODE) console.log("[SIDEBAR] Script block loaded.");
+    const DEBUG_MODE = false;
 
-    // --- Generic Function Callers ---
-    function callAppsScript(functionName) {
-      if (DEBUG_MODE) console.log("[SIDEBAR] Calling Apps Script function:", functionName);
+    // --- Utility Functions ---
+
+    /** Shows the main processing loader. */
+    function showLoader(loaderId = 'action-loader') {
+      const loader = document.getElementById(loaderId);
+      if (loader) loader.style.display = 'block';
+    }
+
+    /** Hides all loaders. */
+    function hideLoaders() {
+      ['info-loader', 'action-loader'].forEach(id => {
+        const loader = document.getElementById(id);
+        if (loader) loader.style.display = 'none';
+      });
+    }
+
+    /** Clears all status message areas. */
+    function clearAllStatusMessages() {
+      ['info-error', 'pdf-status', 'format-status', 'quote-status'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerHTML = '';
+          if (id === 'info-error') el.style.display = 'none';
+        }
+      });
+    }
+
+    /** Displays a status message in a specific status area. */
+    function showStatusMessage(elementId, result) {
+        hideLoaders();
+        const statusArea = document.getElementById(elementId);
+        if (!statusArea || !result || typeof result !== 'string') return;
+
+        let statusClass = 'success';
+        let message = result;
+
+        if (result.toLowerCase().startsWith('http')) { // PDF link
+            const linkText = (elementId === 'pdf-status') ? 'PDF Sumário Gerado! Clique para abrir.' : 'PDF Orçamento Gerado! Clique para abrir.';
+            statusArea.innerHTML = `<a href="${result}" target="_blank">${linkText}</a>`;
+            return;
+        } else if (result.toLowerCase().startsWith('erro:') || result.toLowerCase().startsWith('erro ao')) { // Error
+            statusClass = 'error';
+            message = result;
+        } else if (result.includes("Nenhum texto encontrado") || result.includes("Nenhuma linha de dados encontrada")) { // Warning/Info
+             statusClass = 'warning';
+        }
+
+        statusArea.innerHTML = `<span class="${statusClass}">${message}</span>`;
+    }
+
+    /** Handles Apps Script call failures. */
+    function onFailure(error, statusElementId = null) {
+      if (DEBUG_MODE) console.error("Apps Script call failed:", error);
+      hideLoaders();
+      const message = 'Ocorreu um erro: ' + (error.message || 'Erro desconhecido.');
+      if (statusElementId) {
+          const statusArea = document.getElementById(statusElementId);
+          if (statusArea) {
+              statusArea.innerHTML = `<span class="error">${message}</span>`;
+          } else {
+              // Fallback if status area ID is invalid
+              console.error(`Status area #${statusElementId} not found.`);
+              alert(message);
+          }
+      } else {
+        alert(message);
+      }
+    }
+
+    /** Clears info placeholders and optionally sets error state. */
+    function clearInfoPlaceholders(isError = false) {
+       const errorText = isError ? 'Erro' : '...';
+       const floorplanLink = document.getElementById('floorplan-link');
+
+       floorplanLink.innerText = isError ? 'Erro' : 'A carregar...';
+       floorplanLink.href = '#';
+
+       document.getElementById('client-name').innerText = errorText;
+       document.getElementById('client-address').innerText = errorText;
+       document.getElementById('client-nif').innerText = errorText;
+       document.getElementById('client-email').innerText = errorText;
+    }
+
+    // --- Generic & Specific Action Callers ---
+
+    /** Generic caller for view switching functions. */
+    function callViewFunction(functionName) {
+      if (DEBUG_MODE) console.log(`Calling view function: ${functionName}`);
       showLoader('action-loader');
       clearAllStatusMessages();
       google.script.run
@@ -172,184 +255,111 @@
         [functionName]();
     }
 
+    /** Caller for functions that return status/URL, updates a specific element. */
     function callWithStatusUpdate(functionName, statusElementId, statusVerb) {
-        if (DEBUG_MODE) console.log("[SIDEBAR] Calling Apps Script function with status:", functionName);
+        if (DEBUG_MODE) console.log(`Calling status function: ${functionName}`);
         showLoader('action-loader');
         clearAllStatusMessages();
-        var statusArea = document.getElementById(statusElementId);
-        if (statusArea) statusArea.innerHTML = '<span class="loader">' + statusVerb + '...</span>'; // Show status verb as loader text
+        const statusArea = document.getElementById(statusElementId);
+        if (statusArea) statusArea.innerHTML = `<span class="loader">${statusVerb}...</span>`;
 
         google.script.run
-          .withSuccessHandler(function(result) {
-              hideLoaders();
-              showStatusMessage(statusElementId, result);
-          })
-          .withFailureHandler(function(error) {
-               onFailure(error, statusElementId);
-          })
+          .withSuccessHandler(result => showStatusMessage(statusElementId, result))
+          .withFailureHandler(error => onFailure(error, statusElementId))
           [functionName]();
     }
 
-    // --- Specific Action Triggers ---
-    function generateSummaryPdfAction() { // Renamed to avoid conflict
+    function triggerSummaryPdfGeneration() {
         callWithStatusUpdate('generateSummaryPdf', 'pdf-status', 'A gerar PDF Sumário');
     }
-    function generateQuotePdfAction() { // Renamed to avoid conflict
+    function triggerQuotePdfGeneration() {
         callWithStatusUpdate('generateQuotePdf', 'quote-status', 'A gerar PDF Orçamento');
     }
-    function uppercaseSheet() {
+    function triggerUppercaseConversion() {
         callWithStatusUpdate('convertSheetToUppercase', 'format-status', 'A converter texto');
     }
-    function prepareQuote() {
+    function triggerQuotePreparation() {
         callWithStatusUpdate('prepareQuoteSheet', 'quote-status', 'A preparar orçamento');
     }
 
+    // --- Info Section Handlers ---
 
-    // --- Initial Data Loading ---
+    /** Initiates loading of project info on sidebar load. */
     function loadInitialData() {
-      if (DEBUG_MODE) console.log("[SIDEBAR] loadInitialData: Iniciando...");
       showLoader('info-loader');
       clearAllStatusMessages();
       clearInfoPlaceholders();
-      // try-catch removed as per requirement; withFailureHandler is sufficient
+
       google.script.run
         .withSuccessHandler(updateInfoSection)
         .withFailureHandler(onInfoFailure)
         .getProjectInfo();
-      if (DEBUG_MODE) console.log("[SIDEBAR] loadInitialData: Chamada para getProjectInfo enviada.");
     }
 
-    // --- Callback Handlers ---
+    /** Updates the DOM with received project info. */
     function updateInfoSection(projectInfo) {
-      if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: Recebido:", projectInfo);
       hideLoaders();
-      // Check if the received object is valid and doesn't have our custom error flag
+
       if (projectInfo && !projectInfo.error) {
-        if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: Atualizando DOM...");
-        var floorplanLink = document.getElementById('floorplan-link');
+        const floorplanLink = document.getElementById('floorplan-link');
         floorplanLink.href = projectInfo.floorplanUrl || '#';
         floorplanLink.innerText = (projectInfo.floorplanUrl && projectInfo.floorplanUrl !== '#') ? 'Abrir Documento' : 'N/A';
+
         document.getElementById('client-name').innerText = projectInfo.clientName || 'N/A';
         document.getElementById('client-address').innerText = projectInfo.clientAddress || 'N/A';
         document.getElementById('client-nif').innerText = projectInfo.clientNif || 'N/A';
         document.getElementById('client-email').innerText = projectInfo.clientEmail || 'N/A';
-        if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: DOM atualizado.");
       } else {
-         // Handle cases where projectInfo might be null, undefined, or our custom error object
-         if (DEBUG_MODE) console.log("[SIDEBAR] updateInfoSection: projectInfo indica erro ou é inválido. Chamando onInfoFailure.");
-         // Pass the error message from the object if it exists
-         onInfoFailure(projectInfo || { message: 'Dados recebidos inválidos do script (updateInfoSection).' });
+         onInfoFailure(projectInfo || { message: 'Dados recebidos inválidos do script.' });
       }
     }
 
-    // --- Status & Error Display ---
-    function showStatusMessage(elementId, message) {
-        hideLoaders();
-        var statusArea = document.getElementById(elementId);
-        if (!statusArea) return;
-        if (DEBUG_MODE) console.log("[SIDEBAR] showStatusMessage for #" + elementId + ":", message);
-        if (message && typeof message === 'string') {
-            if (message.toLowerCase().startsWith('http')) { // PDF link
-                var linkText = (elementId === 'pdf-status') ? 'PDF Sumário Gerado! Clique para abrir.' : 'PDF Orçamento Gerado! Clique para abrir.';
-                statusArea.innerHTML = '<a href="' + message + '" target="_blank">' + linkText + '</a>';
-            } else if (message.toLowerCase().startsWith('erro:')) { // Error
-                statusArea.innerHTML = '<span class="error">' + message + '</span>';
-            } else if (message.includes("Nenhum texto encontrado")) { // Warning
-                 statusArea.innerHTML = '<span class="warning">' + message + '</span>';
-            } else { // Success
-                statusArea.innerHTML = '<span class="success">' + message + '</span>';
-            }
-        } else { // Unexpected
-            statusArea.innerHTML = '<span class="error">Resposta inesperada recebida.</span>';
-             if (DEBUG_MODE) console.error("Unexpected result type for status message:", message);
+    /** Handles failure during project info loading. */
+    function onInfoFailure(error) {
+      hideLoaders();
+      const errorDiv = document.getElementById('info-error');
+      errorDiv.innerText = 'Erro Info: ' + (error.message || 'Detalhes indisponíveis.');
+      errorDiv.style.display = 'block';
+      clearInfoPlaceholders(true);
+    }
+
+    /** Opens the Edit Dialog on double-click of an info field. */
+    function openEditDialog(event) {
+        // Find the closest element with a data-field attribute
+        const targetElement = event.target.closest('[data-field]');
+        if (!targetElement) return;
+
+        const fieldName = targetElement.dataset.field;
+        // Use innerText for <span>s and href for <a> (floorplan link)
+        const currentValue = targetElement.tagName === 'A' ? targetElement.href : targetElement.innerText;
+
+        if (fieldName && currentValue !== 'N/A' && currentValue !== 'A carregar...' && currentValue !== 'Erro') {
+            if (DEBUG_MODE) console.log(`Opening edit dialog for ${fieldName}`);
+            showLoader('action-loader');
+            google.script.run
+                .withSuccessHandler(hideLoaders)
+                .withFailureHandler(onFailure)
+                .showEditInfoFieldModal(fieldName, currentValue === 'Abrir Documento' ? '' : currentValue); // Pass empty string if link text is just "Abrir Documento"
         }
     }
 
-    function onFailure(error, statusElementId = null) {
-      if (DEBUG_MODE) console.error("[SIDEBAR] onFailure: Apps Script call failed: ", error);
-      hideLoaders();
-      var message = 'Ocorreu um erro: ' + (error.message || 'Erro desconhecido.');
-      if (statusElementId) {
-          var statusArea = document.getElementById(statusElementId);
-          if (statusArea) {
-              statusArea.innerHTML = '<span class="error">' + message + '</span>';
-          } else {
-              alert(message); // Fallback to alert if status area not found
-          }
-      } else {
-        alert(message); // Generic alert if no specific status area
-      }
-    }
+    // --- Initialization and Listeners ---
 
-    function onInfoFailure(error) {
-      if (DEBUG_MODE) console.error("[SIDEBAR] onInfoFailure: Failed to load project info: ", error);
-      hideLoaders();
-      var errorDiv = document.getElementById('info-error');
-      // Use the message from the error object if available
-      errorDiv.innerText = 'Erro Info: ' + (error.message || 'Detalhes indisponíveis.');
-      errorDiv.style.display = 'block';
-      clearInfoPlaceholders(true); // Clear placeholders and show 'Erro'
-    }
-
-    // --- Utility Functions ---
-     function clearInfoPlaceholders(isError = false) {
-       var errorText = isError ? 'Erro' : '...';
-       var floorplanLink = document.getElementById('floorplan-link');
-       floorplanLink.innerText = isError ? 'Erro' : 'A carregar...';
-       floorplanLink.href = '#';
-       document.getElementById('client-name').innerText = errorText;
-       document.getElementById('client-address').innerText = errorText;
-       document.getElementById('client-nif').innerText = errorText;
-       document.getElementById('client-email').innerText = errorText;
-     }
-
-     function clearAllStatusMessages() {
-        var errorDiv = document.getElementById('info-error');
-        var pdfStatus = document.getElementById('pdf-status');
-        var formatStatus = document.getElementById('format-status');
-        var quoteStatus = document.getElementById('quote-status'); // Added quote status
-        if(errorDiv) { errorDiv.style.display = 'none'; errorDiv.innerText = ''; }
-        if(pdfStatus) { pdfStatus.innerText = '';}
-        if(formatStatus) { formatStatus.innerText = '';}
-        if(quoteStatus) { quoteStatus.innerText = '';} // Clear quote status
-     }
-     function showLoader(loaderId) {
-       var loader = document.getElementById(loaderId);
-       if(loader) loader.style.display = 'block';
-     }
-
-     function hideLoaders() {
-       var infoLoader = document.getElementById('info-loader');
-       var actionLoader = document.getElementById('action-loader');
-       if(infoLoader) infoLoader.style.display = 'none';
-       if(actionLoader) actionLoader.style.display = 'none';
-        if (DEBUG_MODE) console.log("[SIDEBAR] hideLoaders: Loaders escondidos.");
-     }
-
-    // Load initial data when the sidebar opens
-     if (DEBUG_MODE) console.log("[SIDEBAR] Adicionando event listener para 'load'.");
      window.addEventListener('load', loadInitialData);
 
-    // --- Column Chooser UI Logic (To be removed) ---
-    // All the JavaScript related to the old Column Chooser dialog that was embedded in Sidebar.html
-    // will be removed in this step. The new dialog is in ColumnChooserDialog.html.
+    // Attach double-click listeners for editing info fields
+    document.querySelectorAll('#info-section-container [data-field]').forEach(element => {
+        element.addEventListener('dblclick', openEditDialog);
+    });
 
     // Add event listeners to all cog buttons to open the MODAL dialog
-    document.querySelectorAll('.cog-button').forEach(function(button) {
-      button.addEventListener('click', function(event) {
+    document.querySelectorAll('.cog-button').forEach(button => {
+      button.addEventListener('click', event => {
         const viewName = event.currentTarget.dataset.viewName;
-        if (DEBUG_MODE) console.log("[SIDEBAR] Cog clicked, attempting to open modal for view:", viewName);
-        showLoader('action-loader'); // Show sidebar loader while dialog is preparing
+        showLoader('action-loader');
         google.script.run
-          .withSuccessHandler(function() {
-            hideLoaders(); // Hide sidebar loader once dialog is shown (or if it fails)
-            if (DEBUG_MODE) console.log("[SIDEBAR] showColumnChooserModal called successfully on server.");
-            // No specific client-side action needed here as showModalDialog handles the display.
-          })
-          .withFailureHandler(function(error) {
-            hideLoaders(); // Hide sidebar loader
-            onFailure(error, null); // Use general sidebar error handling
-          })
+          .withSuccessHandler(hideLoaders)
+          .withFailureHandler(onFailure)
           .showColumnChooserModal(viewName);
       });
     });
