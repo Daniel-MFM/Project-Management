@@ -12,7 +12,7 @@
       font-family: 'Reddit Sans Condensed', sans-serif;
       font-size: 14px;
       margin: 0;
-      background-color: #f9f9f9; /* Light background for the dialog */
+      background-color: #f9f9f9;
     }
     body, p, span, a, button, h3, div, label, input, select, textarea {
       font-family: 'Reddit Sans Condensed', sans-serif;
@@ -25,10 +25,10 @@
       border-radius: 3px;
       font-size: 14px;
       margin-bottom: 12px;
+      resize: vertical;
     }
     textarea#edit-value-input {
-      min-height: 80px; /* For address or other multiline fields */
-      resize: vertical;
+      min-height: 80px;
     }
     .buttons {
       text-align: right;
@@ -41,8 +41,9 @@
       font-weight: bold;
       border-radius: 2px;
       border: 1px solid transparent;
+      cursor: pointer;
     }
-    button#save-button { /* Matches .blue or action button style */
+    button#save-button {
       background-color: #4d90fe;
       color: white;
       border-color: #3079ed;
@@ -70,9 +71,7 @@
 </head>
 <body>
   <div>
-    <!-- Input field will be text or textarea based on fieldName, determined by JS or could be templated -->
-    <!-- For now, JS will handle replacing this placeholder if needed, or we assume input is default -->
-    <textarea id="edit-value-input" rows="4"></textarea>
+    <textarea id="edit-value-input"></textarea>
   </div>
   <div id="dialog-status"></div>
   <div class="buttons">
@@ -81,71 +80,64 @@
   </div>
 
   <script>
-    var fieldName = "<?!= fieldName ?>";
-    var currentValue = "<?!= currentValue ?>";
-    var DEBUG_MODE = false; // Set to true for local dialog debugging
+    const fieldName = "<?!= fieldName ?>";
+    const currentValue = "<?!= currentValue ?>";
 
     const inputElement = document.getElementById('edit-value-input');
     const saveButton = document.getElementById('save-button');
     const cancelButton = document.getElementById('cancel-button');
     const statusElement = document.getElementById('dialog-status');
 
-    window.addEventListener('load', function() {
-      if (DEBUG_MODE) console.log("Dialog loaded. Field:", fieldName, "Value:", currentValue);
+    /** Closes the dialog window. */
+    function closeDialog() {
+      google.script.host.close();
+    }
 
-      // Determine if textarea is more appropriate (e.g., for addresses)
-      // For this version, we'll stick to one type of input (textarea) for simplicity of the HTML.
-      // If 'clientAddress' or a field known to be multi-line, ensure it's a textarea or adjust height.
-      // The HTML already uses a textarea, so this is mostly for value setting.
-      inputElement.value = currentValue;
-      inputElement.focus(); // Focus on the input field when dialog opens
-      if (fieldName === "clientAddress") { // Example: make textarea larger for address
-        inputElement.rows = 4;
-      } else {
-        inputElement.rows = 2; // Default smaller for other fields
-      }
-    });
-
+    /** Enables/disables the save and cancel buttons during processing. */
     function setButtonsDisabled(disabled) {
         saveButton.disabled = disabled;
         cancelButton.disabled = disabled;
     }
 
-    saveButton.addEventListener('click', function() {
-      var newValue = inputElement.value;
+    /** Handles the save action, calls Apps Script, and updates status. */
+    function handleSave() {
+      const newValue = inputElement.value;
       statusElement.textContent = "A guardar...";
       statusElement.className = 'status-saving';
       setButtonsDisabled(true);
 
-      if (DEBUG_MODE) console.log("Saving field:", fieldName, "New value:", newValue);
-
       google.script.run
-        .withSuccessHandler(function(response) {
-          if (DEBUG_MODE) console.log("Save success response:", response);
+        .withSuccessHandler(response => {
           setButtonsDisabled(false);
           if (response && response.success) {
-            google.script.host.close();
+            closeDialog();
           } else {
             statusElement.textContent = (response && response.message) ? response.message : "Erro desconhecido ao guardar.";
             statusElement.className = 'status-error';
           }
         })
-        .withFailureHandler(function(error) {
-          if (DEBUG_MODE) console.error("Save failure error:", error);
+        .withFailureHandler(error => {
           setButtonsDisabled(false);
           statusElement.textContent = error.message || "Erro ao comunicar com o servidor.";
           statusElement.className = 'status-error';
         })
         .updateProjectInfoField(fieldName, newValue);
+    }
+
+    // --- Initialization and Listeners ---
+
+    window.addEventListener('load', () => {
+      inputElement.value = currentValue;
+      inputElement.rows = (fieldName === "clientAddress" || currentValue.length > 50) ? 4 : 2;
+      inputElement.focus();
     });
 
-    cancelButton.addEventListener('click', function() {
-      google.script.host.close();
-    });
+    saveButton.addEventListener('click', handleSave);
+    cancelButton.addEventListener('click', closeDialog);
 
-    window.addEventListener('keydown', function(event) {
+    window.addEventListener('keydown', event => {
       if (event.key === 'Escape') {
-        google.script.host.close();
+        closeDialog();
       }
     });
   </script>
