@@ -12,14 +12,15 @@
          padding: 20px;
          font-family: 'Reddit Sans Condensed', sans-serif;
          font-size: 14px;
-         text-align: center; /* Center content */
+         text-align: center;
        }
        p {
-         margin-bottom: 15px; /* Space below text */
+         margin-bottom: 15px;
        }
        button {
-         margin: 0 5px; /* Space between buttons */
-         padding: 8px 16px; /* Make buttons slightly larger */
+         margin: 0 5px;
+         padding: 8px 16px;
+         cursor: pointer;
        }
      </style>
   </head>
@@ -31,10 +32,9 @@
     </div>
 
     <script>
+      /** Calls the Apps Script function to show the sidebar and closes this modal. */
       function openSidebarAndClose() {
-        // Call the function in Code.gs that shows the *actual* sidebar
         google.script.run.showSidebar();
-        // Close this dialog window
         google.script.host.close();
       }
     </script>
